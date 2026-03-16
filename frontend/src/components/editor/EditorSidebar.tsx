@@ -55,7 +55,7 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
     const { ruleApi } = await import('../../api/rule.api');
     try {
       const isValidUuid = (val: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
-      const nextStepId = rule.nextStepId && isValidUuid(rule.nextStepId) ? rule.nextStepId : null;
+      const nextStepId = rule.nextStepId && rule.nextStepId !== '__end__' && isValidUuid(rule.nextStepId) ? rule.nextStepId : null;
       const payload = {
         condition: rule.condition || 'DEFAULT',
         nextStepId,
@@ -170,7 +170,8 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
                     className="bg-transparent border-none text-slate-200 outline-none p-0 cursor-pointer"
                   >
                     <option value="">Select a step</option>
-                    {nodes.filter(n => n.id !== selectedNode.id && n.id.length > 15).map(n => (
+                    <option value="__end__">🏁 End Workflow</option>
+                    {nodes.filter(n => n.id !== selectedNode.id).map(n => (
                       <option key={n.id} value={n.id}>{n.data?.label || 'Unnamed Step'}</option>
                     ))}
                   </select>

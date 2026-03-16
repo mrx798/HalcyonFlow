@@ -66,13 +66,33 @@ const WorkflowEditorPage: React.FC = () => {
         metadata: data.metadata || {}
       };
       if (isNew) {
-        return await stepApi.createStep(id!, payload);
+        const res = await stepApi.createStep(id!, payload);
+        return { isNew: true, oldId: stepId, response: res };
       } else {
-        return await stepApi.updateStep(id!, stepId, payload);
+        const res = await stepApi.updateStep(id!, stepId, payload);
+        return { isNew: false, oldId: stepId, response: res };
       }
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       toast.success('Step saved successfully');
+      if (result.isNew && result.response?.data?.data?.id) {
+        const newId = result.response.data.data.id;
+        const oldId = result.oldId;
+        // Replace the temporary node ID with the real backend UUID
+        setNodes((nds) => nds.map((n) => 
+          n.id === oldId 
+            ? { ...n, id: newId, data: { ...n.data, onEdit: () => setSelectedNodeId(newId) } } 
+            : n
+        ));
+        setEdges((eds) => eds.map((e) => ({
+          ...e,
+          source: e.source === oldId ? newId : e.source,
+          target: e.target === oldId ? newId : e.target,
+        })));
+        if (selectedNodeId === oldId) {
+          setSelectedNodeId(newId);
+        }
+      }
       queryClient.invalidateQueries({ queryKey: ['steps', id] });
     },
     onError: (err: any) => {
@@ -95,9 +115,39 @@ const WorkflowEditorPage: React.FC = () => {
         },
       }));
       setNodes(fetchedNodes);
-      setEdges([]);
+
+      // Load rules for each step and build edges
+      const loadEdges = async () => {
+        const { ruleApi } = await import('../api/rule.api');
+        const allEdges: Edge[] = [];
+        for (const step of stepsData) {
+          try {
+            const res = await ruleApi.getRules(id!, step.id);
+            const stepRules = res.data.data || [];
+            stepRules.forEach((rule: any) => {
+              if (rule.nextStepId) {
+                allEdges.push({
+                  id: `e-${step.id}-${rule.nextStepId}-${rule.id}`,
+                  source: step.id,
+                  target: rule.nextStepId,
+                  animated: true,
+                  label: rule.condition !== 'DEFAULT' ? rule.condition : 'default',
+                  style: { stroke: '#06b6d4' },
+                  labelStyle: { fill: '#94a3b8', fontSize: 10 },
+                  labelBgStyle: { fill: '#0f172a', fillOpacity: 0.8 },
+                  labelBgPadding: [6, 4] as [number, number],
+                });
+              }
+            });
+          } catch {
+            // No rules for this step — skip
+          }
+        }
+        setEdges(allEdges);
+      };
+      loadEdges();
     }
-  }, [stepsData]);
+  }, [stepsData, id]);
 
   const onNodesChange: OnNodesChange = useCallback(
     (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
@@ -148,19 +198,10 @@ const WorkflowEditorPage: React.FC = () => {
     toast.success('Auto-layout applied');
   }, []);
 
-  // Test Run handler
-  const handleTestRun = useCallback(async () => {
+  // Test Run handler — navigate to execute page
+  const handleTestRun = useCallback(() => {
     if (!id) return;
-    try {
-      const res = await executionApi.startExecution(id, { inputData: {} });
-      toast.success('Execution started!');
-      const execId = res.data?.data?.id || res.data?.data?.executionId;
-      if (execId) {
-        window.location.href = `/executions/${execId}`;
-      }
-    } catch (e: any) {
-      toast.error(e.response?.data?.message || 'Failed to start execution');
-    }
+    window.location.href = `/workflows/${id}/execute`;
   }, [id]);
 
   if (isLoading || isStepsLoading) return <div className="p-8">Loading editor...</div>;
