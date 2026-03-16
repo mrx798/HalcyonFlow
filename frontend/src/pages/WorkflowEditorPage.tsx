@@ -204,6 +204,18 @@ const WorkflowEditorPage: React.FC = () => {
     window.location.href = `/workflows/${id}/execute`;
   }, [id]);
 
+  // Publish Workflow handler
+  const handlePublish = useCallback(async () => {
+    if (!id) return;
+    try {
+      await api.put(`/workflows/${id}`, { name: workflow?.name, description: workflow?.description || '', status: 'ACTIVE' });
+      toast.success('Workflow published successfully!');
+      queryClient.invalidateQueries({ queryKey: ['workflow', id] });
+    } catch (e: any) {
+      toast.error(e.response?.data?.message || 'Failed to publish workflow');
+    }
+  }, [id, workflow, queryClient]);
+
   if (isLoading || isStepsLoading) return <div className="p-8">Loading editor...</div>;
 
   return (
@@ -234,7 +246,10 @@ const WorkflowEditorPage: React.FC = () => {
           >
             <Play size={14} className="fill-emerald-400" /> Test Run
           </button>
-          <button className="btn-primary flex items-center gap-2 text-xs py-2">
+          <button 
+            onClick={handlePublish}
+            className="btn-primary flex items-center gap-2 text-xs py-2"
+          >
             <Save size={14} /> Publish Workflow
           </button>
         </div>

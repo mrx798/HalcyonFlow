@@ -158,7 +158,7 @@ const ExecutionViewPage: React.FC = () => {
 
           {/* Action Overlay */}
           <AnimatePresence>
-            {execution?.status === 'PAUSED' && (
+            {(execution?.status === 'PAUSED' || execution?.status === 'IN_PROGRESS') && (
               <motion.div
                 initial={{ opacity: 0, y: 50 }}
                 animate={{ opacity: 1, y: 0 }}
