@@ -1,0 +1,50 @@
+{
+  "name": "Expense Approval Workflow",
+  "description": "Automatically routes expenses for approval based on amount and department.",
+  "inputSchema": {
+    "amount": "number",
+    "department": "string",
+    "employeeId": "string"
+  },
+  "steps": [
+    {
+      "name": "Initial Check",
+      "stepType": "TASK",
+      "stepOrder": 1,
+      "metadata": {
+        "action": "verify_receipt"
+      }
+    },
+    {
+      "name": "Approval Routing",
+      "stepType": "APPROVAL",
+      "stepOrder": 2,
+      "metadata": {
+        "approver": "Manager"
+      }
+    }
+  ],
+  "rules": [
+    {
+      "condition": "amount < 1000",
+      "stepName": "Initial Check",
+      "priority": 1,
+      "nextStepName": "Approval Routing",
+      "isDefault": false
+    },
+    {
+      "condition": "amount >= 1000",
+      "stepName": "Initial Check",
+      "priority": 2,
+      "nextStepName": "Manual Review",
+      "isDefault": false
+    },
+    {
+      "condition": "DEFAULT",
+      "stepName": "Approval Routing",
+      "priority": 100,
+      "nextStepName": "End",
+      "isDefault": true
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+# === Backend (Java / Spring Boot / Maven) ===
+backend/target/
+backend/*.log
+backend/backend.log
+backend/compile_output.txt
+
+# === Frontend (Node / Vite / React) ===
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# === IDE ===
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+
+# === OS ===
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# === Env / Secrets ===
+.env
+.env.local
+.env.*.local
+
+# === Test scripts (temporary) ===
+test_all.js
+test_approval.js
+
+# === Logs ===
+*.log
+logs/

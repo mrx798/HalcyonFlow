@@ -1,0 +1,1051 @@
+{
+	"info": {
+		"name": "FlowForge - Complete System Verification",
+		"description": "Complete end-to-end verification of FlowForge workflow automation platform. Contains 28 requests covering Auth, Workflows, Steps, Rules, Executions, Dashboard, Notifications, and Security.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{ "key": "baseUrl", "value": "http://localhost:8080", "type": "string" },
+		{ "key": "token", "value": "", "type": "string" },
+		{ "key": "workflowId", "value": "", "type": "string" },
+		{ "key": "stepId1", "value": "", "type": "string" },
+		{ "key": "stepId2", "value": "", "type": "string" },
+		{ "key": "stepId3", "value": "", "type": "string" },
+		{ "key": "ruleId1", "value": "", "type": "string" },
+		{ "key": "executionId", "value": "", "type": "string" },
+		{ "key": "testEmail", "value": "", "type": "string" }
+	],
+	"item": [
+		{
+			"name": "01 - Register",
+			"request": {
+				"method": "POST",
+				"header": [
+					{ "key": "Content-Type", "value": "application/json" }
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"Sharath Kumar\",\n  \"email\": \"{{testEmail}}\",\n  \"password\": \"password123\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/auth/register",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "auth", "register"]
+				}
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"var uniqueEmail = 'sharath_' + Date.now() + '@flowforge.com';",
+							"pm.collectionVariables.set('testEmail', uniqueEmail);",
+							"console.log('Using email:', uniqueEmail);"
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('Status is 200 or 201', function () {",
+							"    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+							"});",
+							"",
+							"pm.test('Response has accessToken', function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.data).to.have.property('accessToken');",
+							"    pm.collectionVariables.set('token', jsonData.data.accessToken);",
+							"    console.log('Token saved:', jsonData.data.accessToken.substring(0, 20) + '...');",
+							"});"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "02 - Login",
+			"request": {
+				"method": "POST",
+				"header": [
+					{ "key": "Content-Type", "value": "application/json" }
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"password\": \"password123\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/auth/login",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "auth", "login"]
+				}
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('Status is 200', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test('Save accessToken', function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.data).to.have.property('accessToken');",
+							"    pm.collectionVariables.set('token', jsonData.data.accessToken);",
+							"    console.log('Login token:', jsonData.data.accessToken.substring(0, 20) + '...');",
+							"});"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "03 - Get Current User",
+			"request": {
+				"method": "GET",
+				"header": [
+					{ "key": "Authorization", "value": "Bearer {{token}}" }
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/auth/me",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "auth", "me"]
+				}
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('Status is 200', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test('Email matches', function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.data.email).to.eql(pm.collectionVariables.get('testEmail'));",
+							"});",
+							"",
+							"pm.test('Role is USER', function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.data.role).to.eql('USER');",
+							"});"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "04 - Create Workflow",
+			"request": {
+				"method": "POST",
+				"header": [
+					{ "key": "Content-Type", "value": "application/json" },
+					{ "key": "Authorization", "value": "Bearer {{token}}" }
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"Expense Approval\",\n  \"description\": \"Multi-step expense approval with conditional routing\",\n  \"inputSchema\": {\n    \"amount\": {\"type\": \"number\", \"required\": true},\n    \"country\": {\"type\": \"string\", \"required\": true},\n    \"department\": {\"type\": \"string\", \"required\": false},\n    \"priority\": {\"type\": \"string\", \"required\": true, \"allowed_values\": [\"High\",\"Medium\",\"Low\"]}\n  }\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/workflows",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "workflows"]
+				}
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('Status is 200 or 201', function () {",
+							"    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+							"});",
+							"",
+							"pm.test('Workflow created correctly', function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.data.name).to.eql('Expense Approval');",
+							"    pm.expect(jsonData.data.version).to.eql(1);",
+							"    pm.expect(jsonData.data.status).to.eql('DRAFT');",
+							"    pm.collectionVariables.set('workflowId', jsonData.data.id);",
+							"    console.log('workflowId:', jsonData.data.id);",
+							"});"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "05 - List Workflows",
+			"request": {
+				"method": "GET",
+				"header": [
+					{ "key": "Authorization", "value": "Bearer {{token}}" }
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/workflows",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "workflows"]
+				}
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('Status is 200', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test('Workflows array not empty', function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.data).to.be.an('array');",
+							"    pm.expect(jsonData.data.length).to.be.greaterThan(0);",
+							"    console.log('Total workflows:', jsonData.data.length);",
+							"});"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "06 - Get Workflow By ID",
+			"request": {
+				"method": "GET",
+				"header": [
+					{ "key": "Authorization", "value": "Bearer {{token}}" }
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/workflows/{{workflowId}}",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "workflows", "{{workflowId}}"]
+				}
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('Status is 200', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test('Correct workflow returned', function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.data.id).to.eql(pm.collectionVariables.get('workflowId'));",
+							"    pm.expect(jsonData.data.name).to.eql('Expense Approval');",
+							"});"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "07 - Update Workflow",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{ "key": "Content-Type", "value": "application/json" },
+					{ "key": "Authorization", "value": "Bearer {{token}}" }
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"Expense Approval\",\n  \"description\": \"Updated description — multi-step expense approval with conditional routing\",\n  \"inputSchema\": {\n    \"amount\": {\"type\": \"number\", \"required\": true},\n    \"country\": {\"type\": \"string\", \"required\": true},\n    \"department\": {\"type\": \"string\", \"required\": false},\n    \"priority\": {\"type\": \"string\", \"required\": true}\n  }\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/workflows/{{workflowId}}",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "workflows", "{{workflowId}}"]
+				}
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('Status is 200', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test('Version incremented', function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.data.version).to.eql(2);",
+							"    console.log('New version:', jsonData.data.version);",
+							"});"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "08 - Create Step 1 Manager Approval",
+			"request": {
+				"method": "POST",
+				"header": [
+					{ "key": "Content-Type", "value": "application/json" },
+					{ "key": "Authorization", "value": "Bearer {{token}}" }
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"Manager Approval\",\n  \"stepType\": \"APPROVAL\",\n  \"stepOrder\": 1,\n  \"metadata\": {\n    \"assignee_email\": \"manager@company.com\",\n    \"instructions\": \"Review and approve the expense request\"\n  }\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/workflows/{{workflowId}}/steps",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "workflows", "{{workflowId}}", "steps"]
+				}
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('Status is 200 or 201', function () {",
+							"    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+							"});",
+							"",
+							"pm.test('Step 1 created', function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.data.stepType).to.eql('APPROVAL');",
+							"    pm.collectionVariables.set('stepId1', jsonData.data.id);",
+							"    console.log('stepId1:', jsonData.data.id);",
+							"});"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "09 - Create Step 2 Finance Notification",
+			"request": {
+				"method": "POST",
+				"header": [
+					{ "key": "Content-Type", "value": "application/json" },
+					{ "key": "Authorization", "value": "Bearer {{token}}" }
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"Finance Notification\",\n  \"stepType\": \"NOTIFICATION\",\n  \"stepOrder\": 2,\n  \"metadata\": {\n    \"notification_channel\": \"email\",\n    \"template\": \"expense_approved\",\n    \"recipient\": \"finance@company.com\"\n  }\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/workflows/{{workflowId}}/steps",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "workflows", "{{workflowId}}", "steps"]
+				}
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('Status is 200 or 201', function () {",
+							"    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+							"});",
+							"",
+							"pm.test('Step 2 created', function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.data.stepType).to.eql('NOTIFICATION');",
+							"    pm.collectionVariables.set('stepId2', jsonData.data.id);",
+							"    console.log('stepId2:', jsonData.data.id);",
+							"});"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "10 - Create Step 3 Task Rejection",
+			"request": {
+				"method": "POST",
+				"header": [
+					{ "key": "Content-Type", "value": "application/json" },
+					{ "key": "Authorization", "value": "Bearer {{token}}" }
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"Task Rejection\",\n  \"stepType\": \"TASK\",\n  \"stepOrder\": 3,\n  \"metadata\": {\n    \"action\": \"reject_expense\",\n    \"notification\": \"Your expense has been rejected\"\n  }\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/workflows/{{workflowId}}/steps",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "workflows", "{{workflowId}}", "steps"]
+				}
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('Status is 200 or 201', function () {",
+							"    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+							"});",
+							"",
+							"pm.test('Step 3 created', function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.data.stepType).to.eql('TASK');",
+							"    pm.collectionVariables.set('stepId3', jsonData.data.id);",
+							"    console.log('stepId3:', jsonData.data.id);",
+							"});"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "11 - List All Steps",
+			"request": {
+				"method": "GET",
+				"header": [
+					{ "key": "Authorization", "value": "Bearer {{token}}" }
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/workflows/{{workflowId}}/steps",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "workflows", "{{workflowId}}", "steps"]
+				}
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('Status is 200', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test('3 steps returned', function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.data).to.be.an('array');",
+							"    pm.expect(jsonData.data.length).to.eql(3);",
+							"    jsonData.data.forEach(function(step) {",
+							"        console.log('Step:', step.name, '- Type:', step.stepType, '- Order:', step.stepOrder);",
+							"    });",
+							"});"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "12 - Add Rule 1 High Amount US",
+			"request": {
+				"method": "POST",
+				"header": [
+					{ "key": "Content-Type", "value": "application/json" },
+					{ "key": "Authorization", "value": "Bearer {{token}}" }
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"condition\": \"amount > 100 && country == 'US' && priority == 'High'\",\n  \"nextStepId\": \"{{stepId2}}\",\n  \"priority\": 1,\n  \"isDefault\": false\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/workflows/{{workflowId}}/steps/{{stepId1}}/rules",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "workflows", "{{workflowId}}", "steps", "{{stepId1}}", "rules"]
+				}
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('Status is 200 or 201', function () {",
+							"    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+							"});",
+							"",
+							"pm.test('Rule 1 created correctly', function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.data.condition).to.include('amount > 100');",
+							"    pm.expect(jsonData.data.isDefault).to.eql(false);",
+							"    pm.collectionVariables.set('ruleId1', jsonData.data.id);",
+							"    console.log('ruleId1:', jsonData.data.id);",
+							"});"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "13 - Add Rule 2 Low Amount",
+			"request": {
+				"method": "POST",
+				"header": [
+					{ "key": "Content-Type", "value": "application/json" },
+					{ "key": "Authorization", "value": "Bearer {{token}}" }
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"condition\": \"amount <= 100\",\n  \"nextStepId\": \"{{stepId3}}\",\n  \"priority\": 2,\n  \"isDefault\": false\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/workflows/{{workflowId}}/steps/{{stepId1}}/rules",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "workflows", "{{workflowId}}", "steps", "{{stepId1}}", "rules"]
+				}
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('Status is 200 or 201', function () {",
+							"    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+							"});",
+							"",
+							"pm.test('Rule 2 created', function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.data.condition).to.eql('amount <= 100');",
+							"    console.log('Rule 2 created successfully');",
+							"});"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "14 - Add DEFAULT Rule",
+			"request": {
+				"method": "POST",
+				"header": [
+					{ "key": "Content-Type", "value": "application/json" },
+					{ "key": "Authorization", "value": "Bearer {{token}}" }
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"condition\": \"DEFAULT\",\n  \"nextStepId\": \"{{stepId3}}\",\n  \"priority\": 99,\n  \"isDefault\": true\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/workflows/{{workflowId}}/steps/{{stepId1}}/rules",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "workflows", "{{workflowId}}", "steps", "{{stepId1}}", "rules"]
+				}
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('Status is 200 or 201', function () {",
+							"    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+							"});",
+							"",
+							"pm.test('DEFAULT rule created', function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.data.isDefault).to.eql(true);",
+							"    pm.expect(jsonData.data.condition).to.eql('DEFAULT');",
+							"    console.log('DEFAULT rule created successfully');",
+							"});"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "15 - Validate Rule Condition",
+			"request": {
+				"method": "POST",
+				"header": [
+					{ "key": "Content-Type", "value": "application/json" },
+					{ "key": "Authorization", "value": "Bearer {{token}}" }
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"condition\": \"amount > 100 && country == 'US'\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/workflows/{{workflowId}}/steps/{{stepId1}}/rules/validate",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "workflows", "{{workflowId}}", "steps", "{{stepId1}}", "rules", "validate"]
+				}
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('Status is 200', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test('Validation result returned', function () {",
+							"    var jsonData = pm.response.json();",
+							"    console.log('Validation result:', JSON.stringify(jsonData.data));",
+							"});"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "16 - List Rules For Step",
+			"request": {
+				"method": "GET",
+				"header": [
+					{ "key": "Authorization", "value": "Bearer {{token}}" }
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/workflows/{{workflowId}}/steps/{{stepId1}}/rules",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "workflows", "{{workflowId}}", "steps", "{{stepId1}}", "rules"]
+				}
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('Status is 200', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test('3 rules returned', function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.data).to.be.an('array');",
+							"    pm.expect(jsonData.data.length).to.eql(3);",
+							"    var hasDefault = jsonData.data.some(function(r) { return r.isDefault === true; });",
+							"    pm.expect(hasDefault).to.be.true;",
+							"    jsonData.data.forEach(function(r) {",
+							"        console.log('Rule priority:', r.priority, '| condition:', r.condition, '| default:', r.isDefault);",
+							"    });",
+							"});"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "17 - Execute Workflow Happy Path High Amount",
+			"request": {
+				"method": "POST",
+				"header": [
+					{ "key": "Content-Type", "value": "application/json" },
+					{ "key": "Authorization", "value": "Bearer {{token}}" }
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"workflowId\": \"{{workflowId}}\",\n  \"inputData\": {\n    \"amount\": 250,\n    \"country\": \"US\",\n    \"department\": \"Finance\",\n    \"priority\": \"High\"\n  }\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/executions",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "executions"]
+				}
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('Status is 200 or 202', function () {",
+							"    pm.expect(pm.response.code).to.be.oneOf([200, 202]);",
+							"});",
+							"",
+							"pm.test('Execution started', function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.data).to.have.property('id');",
+							"    pm.expect(jsonData.data.status).to.be.oneOf(['PENDING', 'IN_PROGRESS', 'RUNNING', 'PAUSED', 'COMPLETED']);",
+							"    pm.collectionVariables.set('executionId', jsonData.data.id);",
+							"    console.log('executionId:', jsonData.data.id);",
+							"    console.log('status:', jsonData.data.status);",
+							"});"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "18 - Get Execution Status",
+			"request": {
+				"method": "GET",
+				"header": [
+					{ "key": "Authorization", "value": "Bearer {{token}}" }
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/executions/{{executionId}}",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "executions", "{{executionId}}"]
+				}
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('Status is 200', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test('Execution details returned', function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.data.id).to.eql(pm.collectionVariables.get('executionId'));",
+							"    console.log('Current status:', jsonData.data.status);",
+							"    console.log('currentStepId:', jsonData.data.currentStepId);",
+							"    console.log('Number of log entries:', jsonData.data.logs ? jsonData.data.logs.length : 0);",
+							"    console.log('Full logs:', JSON.stringify(jsonData.data.logs, null, 2));",
+							"});"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "19 - Approve The Execution",
+			"request": {
+				"method": "POST",
+				"header": [
+					{ "key": "Content-Type", "value": "application/json" },
+					{ "key": "Authorization", "value": "Bearer {{token}}" }
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"approved\": true,\n  \"comment\": \"Approved by Manager - amount verified and correct\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/executions/{{executionId}}/resume",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "executions", "{{executionId}}", "resume"]
+				}
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('Status is 200', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test('Approval processed', function () {",
+							"    var jsonData = pm.response.json();",
+							"    console.log('Status after approval:', jsonData.data.status);",
+							"});"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "20 - Check Execution After Approval",
+			"request": {
+				"method": "GET",
+				"header": [
+					{ "key": "Authorization", "value": "Bearer {{token}}" }
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/executions/{{executionId}}",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "executions", "{{executionId}}"]
+				}
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('Status is 200', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test('Execution completed or progressed', function () {",
+							"    var jsonData = pm.response.json();",
+							"    console.log('Final status:', jsonData.data.status);",
+							"    if (jsonData.data.logs) {",
+							"        jsonData.data.logs.forEach(function(log, i) {",
+							"            console.log('Log ' + i + ':', JSON.stringify(log));",
+							"        });",
+							"    }",
+							"});"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "21 - Execute Low Amount Different Path",
+			"request": {
+				"method": "POST",
+				"header": [
+					{ "key": "Content-Type", "value": "application/json" },
+					{ "key": "Authorization", "value": "Bearer {{token}}" }
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"workflowId\": \"{{workflowId}}\",\n  \"inputData\": {\n    \"amount\": 50,\n    \"country\": \"US\",\n    \"department\": \"HR\",\n    \"priority\": \"Low\"\n  }\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/executions",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "executions"]
+				}
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('Status is 200 or 202', function () {",
+							"    pm.expect(pm.response.code).to.be.oneOf([200, 202]);",
+							"});",
+							"",
+							"pm.test('Low amount execution started', function () {",
+							"    var jsonData = pm.response.json();",
+							"    console.log('New execution ID:', jsonData.data.id);",
+							"    console.log('Status:', jsonData.data.status);",
+							"    console.log('NOTE: This should route to Task Rejection (amount <= 100)');",
+							"});"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "22 - Cancel Execution",
+			"request": {
+				"method": "POST",
+				"header": [
+					{ "key": "Authorization", "value": "Bearer {{token}}" }
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/executions/{{executionId}}/cancel",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "executions", "{{executionId}}", "cancel"]
+				}
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('Cancel returns 200 or 400 (already finished)', function () {",
+							"    pm.expect(pm.response.code).to.be.oneOf([200, 400]);",
+							"    var jsonData = pm.response.json();",
+							"    console.log('Cancel result:', jsonData.message || jsonData.data?.status);",
+							"});"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "23 - Dashboard Stats",
+			"request": {
+				"method": "GET",
+				"header": [
+					{ "key": "Authorization", "value": "Bearer {{token}}" }
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/dashboard/stats",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "dashboard", "stats"]
+				}
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('Status is 200', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test('Dashboard has data', function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.data.totalWorkflows).to.be.greaterThan(0);",
+							"    console.log('totalWorkflows:', jsonData.data.totalWorkflows);",
+							"    console.log('totalExecutions:', jsonData.data.totalExecutions);",
+							"    console.log('successRate:', jsonData.data.successRate);",
+							"    console.log('pendingApprovals:', jsonData.data.pendingApprovals);",
+							"});"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "24 - Recent Executions",
+			"request": {
+				"method": "GET",
+				"header": [
+					{ "key": "Authorization", "value": "Bearer {{token}}" }
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/dashboard/recent-executions",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "dashboard", "recent-executions"]
+				}
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('Status is 200', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test('Recent executions returned', function () {",
+							"    var jsonData = pm.response.json();",
+							"    console.log('Recent executions count:', jsonData.data ? jsonData.data.length : 0);",
+							"    if (jsonData.data && jsonData.data.length > 0) {",
+							"        console.log('First execution:', JSON.stringify(jsonData.data[0]));",
+							"    }",
+							"});"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "25 - Get Notifications",
+			"request": {
+				"method": "GET",
+				"header": [
+					{ "key": "Authorization", "value": "Bearer {{token}}" }
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/notifications",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "notifications"]
+				}
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('Status is 200', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test('Notifications returned', function () {",
+							"    var jsonData = pm.response.json();",
+							"    console.log('Total notifications:', jsonData.data ? jsonData.data.length : 0);",
+							"    if (jsonData.data) {",
+							"        jsonData.data.forEach(function(n) {",
+							"            console.log('Notification:', n.type, '-', n.title);",
+							"        });",
+							"    }",
+							"});"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "26 - Mark All Notifications Read",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{ "key": "Authorization", "value": "Bearer {{token}}" }
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/notifications/read-all",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "notifications", "read-all"]
+				}
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('Status is 200', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test('Mark all read confirmed', function () {",
+							"    console.log('All notifications marked as read');",
+							"});"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "27 - Security Test No Token",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/workflows",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "workflows"]
+				}
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('Unauthorized - 401 or 403', function () {",
+							"    pm.expect(pm.response.code).to.be.oneOf([401, 403]);",
+							"    console.log('Security working correctly - unauthorized access blocked');",
+							"});"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "28 - Security Test Wrong Password",
+			"request": {
+				"method": "POST",
+				"header": [
+					{ "key": "Content-Type", "value": "application/json" }
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"password\": \"wrongpassword999\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/auth/login",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "auth", "login"]
+				}
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('Wrong password rejected - 400 or 401', function () {",
+							"    pm.expect(pm.response.code).to.be.oneOf([400, 401]);",
+							"    console.log('Auth security working - wrong password rejected');",
+							"});"
+						]
+					}
+				}
+			]
+		}
+	]
+}

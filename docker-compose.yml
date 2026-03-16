@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: flowforge-db
+    environment:
+      POSTGRES_DB: flowforge_db
+      POSTGRES_USER: flowforge_user
+      POSTGRES_PASSWORD: 1434@Sharath
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U flowforge_user -d flowforge_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    container_name: flowforge-backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/flowforge_db
+      SPRING_DATASOURCE_USERNAME: flowforge_user
+      SPRING_DATASOURCE_PASSWORD: 1434@Sharath
+      JWT_SECRET: flowforge-super-secret-key-minimum-256-bits-long-for-hs256
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    container_name: flowforge-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:

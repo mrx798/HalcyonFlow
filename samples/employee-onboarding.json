@@ -1,0 +1,43 @@
+{
+  "name": "Employee Onboarding Workflow",
+  "description": "Orchestrates setup for new hires.",
+  "inputSchema": {
+    "employeeName": "string",
+    "role": "string",
+    "location": "string"
+  },
+  "steps": [
+    {
+      "name": "IT Setup",
+      "stepType": "TASK",
+      "stepOrder": 1,
+      "metadata": {
+        "resources": ["email", "slack", "laptop"]
+      }
+    },
+    {
+      "name": "HR Welcome",
+      "stepType": "NOTIFICATION",
+      "stepOrder": 2,
+      "metadata": {
+        "template": "welcome_email_standard"
+      }
+    }
+  ],
+  "rules": [
+    {
+      "condition": "location == 'Remote'",
+      "stepName": "IT Setup",
+      "priority": 1,
+      "nextStepName": "HR Welcome",
+      "isDefault": false
+    },
+    {
+      "condition": "DEFAULT",
+      "stepName": "IT Setup",
+      "priority": 100,
+      "nextStepName": "Office Orientation",
+      "isDefault": true
+    }
+  ]
+}
