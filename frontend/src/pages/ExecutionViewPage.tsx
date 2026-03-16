@@ -249,13 +249,13 @@ const ExecutionViewPage: React.FC = () => {
           <div className="p-6 border-t border-slate-700/50 bg-slate-900/30">
             <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4">Context Data</h3>
             <div className="space-y-2">
-              {Object.entries(execution?.contextData || {}).map(([key, val]: any) => (
+              {Object.entries(execution?.inputData || {}).map(([key, val]: any) => (
                 <div key={key} className="flex justify-between text-[11px]">
                   <span className="text-slate-400">{key}:</span>
                   <span className="text-slate-200 font-mono italic">{JSON.stringify(val)}</span>
                 </div>
               ))}
-              {Object.keys(execution?.contextData || {}).length === 0 && (
+              {Object.keys(execution?.inputData || {}).length === 0 && (
                 <p className="text-slate-600 text-[10px] italic">No variables defined.</p>
               )}
             </div>

@@ -111,8 +111,8 @@ const AuditLogPage: React.FC = () => {
                     {ex.duration ? `${ex.duration}ms` : '--'}
                   </td>
                   <td className="px-8 py-5">
-                    <p className="text-xs text-slate-300">{new Date(ex.startTime).toLocaleDateString()}</p>
-                    <p className="text-[10px] text-slate-500 mt-0.5">{new Date(ex.startTime).toLocaleTimeString()}</p>
+                    <p className="text-xs text-slate-300">{new Date(ex.startedAt).toLocaleDateString()}</p>
+                    <p className="text-[10px] text-slate-500 mt-0.5">{new Date(ex.startedAt).toLocaleTimeString()}</p>
                   </td>
                   <td className="px-8 py-5 text-right">
                     <Link 

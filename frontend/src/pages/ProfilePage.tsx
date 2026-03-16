@@ -15,7 +15,7 @@ const ProfilePage: React.FC = () => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const response = await api.post('/auth/me', { name });
+      const response = await api.put('/auth/profile', { name });
       if (user) {
         updateUser({ ...user, name: response.data.data.name });
       }
