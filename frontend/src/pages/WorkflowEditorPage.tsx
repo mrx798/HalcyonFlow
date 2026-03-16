@@ -22,7 +22,8 @@ import { ApiResponse } from '../types/auth';
 import { Workflow } from '../types/workflow';
 import StepNode from '../components/editor/StepNode';
 import EditorSidebar from '../components/editor/EditorSidebar';
-import { Save, Play, Plus, ChevronLeft, Layout, MousePointer2, CheckCircle, Bell } from 'lucide-react';
+import InputSchemaEditor from '../components/editor/InputSchemaEditor';
+import { Save, Play, Plus, ChevronLeft, Layout, MousePointer2, CheckCircle, Bell, Database, GitBranch } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -37,6 +38,37 @@ const WorkflowEditorPage: React.FC = () => {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [showSchemaEditor, setShowSchemaEditor] = useState(false);
+
+  const { data: executionsRes } = useQuery({
+    queryKey: ['executions', id],
+    queryFn: () => executionApi.getExecutionsByWorkflow(id!).then(res => res.data.data),
+    enabled: !!id
+  });
+
+  const workflowStats = useMemo(() => {
+    if (!executionsRes || !Array.isArray(executionsRes)) return { total: 0, successRate: 0, avgDuration: 0, recentStatus: [] };
+    const wEx = executionsRes;
+    const completed = wEx.filter((e: any) => e.status === 'COMPLETED');
+    const successRate = wEx.length ? Math.round((completed.length / wEx.length) * 100) : 0;
+    
+    let totalDuration = 0;
+    let durationCount = 0;
+    completed.forEach((e: any) => {
+      if (e.startedAt && e.endedAt) {
+        totalDuration += new Date(e.endedAt).getTime() - new Date(e.startedAt).getTime();
+        durationCount++;
+      }
+    });
+    const avgDuration = durationCount ? Math.round(totalDuration / durationCount / 1000) : 0;
+    
+    return {
+      total: wEx.length,
+      successRate,
+      avgDuration,
+      recentStatus: wEx.slice(0, 10).map((e: any) => e.status)
+    };
+  }, [executionsRes]);
 
   const { data: workflow, isLoading } = useQuery<Workflow>({
     queryKey: ['workflow', id],
@@ -59,7 +91,7 @@ const WorkflowEditorPage: React.FC = () => {
 
   const saveStepMutation = useMutation({
     mutationFn: async ({ stepId, data }: { stepId: string, data: any }) => {
-      const isNew = stepId.length < 15; 
+      const isNew = !!data.isNew; 
       const payload = {
         name: data.label,
         stepType: (data.type || 'TASK').toUpperCase(),
@@ -81,7 +113,7 @@ const WorkflowEditorPage: React.FC = () => {
         // Replace the temporary node ID with the real backend UUID
         setNodes((nds) => nds.map((n) => 
           n.id === oldId 
-            ? { ...n, id: newId, data: { ...n.data, onEdit: () => setSelectedNodeId(newId) } } 
+            ? { ...n, id: newId, data: { ...n.data, isNew: false, onEdit: () => setSelectedNodeId(newId) } } 
             : n
         ));
         setEdges((eds) => eds.map((e) => ({
@@ -206,9 +238,14 @@ const WorkflowEditorPage: React.FC = () => {
 
   // Publish Workflow handler
   const handlePublish = useCallback(async () => {
-    if (!id) return;
+    if (!id || !workflow) return;
     try {
-      await api.put(`/workflows/${id}`, { name: workflow?.name, description: workflow?.description || '', status: 'ACTIVE' });
+      await api.put(`/workflows/${id}`, { 
+        name: workflow.name, 
+        description: workflow.description || '', 
+        status: 'ACTIVE',
+        inputSchema: workflow.inputSchema || {} 
+      });
       toast.success('Workflow published successfully!');
       queryClient.invalidateQueries({ queryKey: ['workflow', id] });
     } catch (e: any) {
@@ -228,12 +265,24 @@ const WorkflowEditorPage: React.FC = () => {
           </Link>
           <div className="h-6 w-px bg-slate-700" />
           <div>
-            <h1 className="text-sm font-bold text-white uppercase tracking-wider">{workflow?.name}</h1>
-            <p className="text-[10px] text-slate-500 font-medium">Auto-saving enabled</p>
+            <div className="flex items-center gap-2">
+              <h1 className="text-sm font-bold text-white uppercase tracking-wider">{workflow?.name}</h1>
+              <span className="px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20">v{workflow?.version || 1}</span>
+              <span className={`px-1.5 py-0.5 rounded-md text-[9px] font-bold ${
+                workflow?.status === 'ACTIVE' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+              }`}>{workflow?.status || 'DRAFT'}</span>
+            </div>
+            <p className="text-[10px] text-slate-500 font-medium">{nodes.length} step{nodes.length !== 1 ? 's' : ''} · Auto-saving</p>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
+          <button 
+            onClick={() => setShowSchemaEditor(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-600/10 border border-purple-500/20 text-purple-400 hover:bg-purple-600/20 transition-all text-xs font-bold"
+          >
+            <Database size={14} /> Schema {Object.keys(workflow?.inputSchema || {}).length > 0 && <span className="px-1.5 py-0.5 rounded-full bg-purple-500/20 text-[9px]">{Object.keys(workflow?.inputSchema || {}).length}</span>}
+          </button>
           <button 
             onClick={handleAutoLayout}
             className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 hover:bg-slate-700 transition-all text-xs font-bold"
@@ -255,19 +304,50 @@ const WorkflowEditorPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Workflow Stats Panel (Feature 4) */}
+      <div className="h-10 bg-slate-900/50 border-b border-slate-700/50 px-6 flex items-center justify-between z-10 text-[10px] font-mono">
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2">
+            <span className="text-slate-500 uppercase tracking-widest">Total Runs:</span>
+            <span className="text-white font-bold">{workflowStats.total}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-slate-500 uppercase tracking-widest">Success Rate:</span>
+            <span className={workflowStats.successRate >= 90 ? 'text-emerald-400 font-bold' : workflowStats.successRate >= 50 ? 'text-amber-400 font-bold' : 'text-red-400 font-bold'}>
+              {workflowStats.successRate}%
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-slate-500 uppercase tracking-widest">Avg Runtime:</span>
+            <span className="text-cyan-400 font-bold">{workflowStats.avgDuration}s</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-1">
+          <span className="text-slate-600 uppercase tracking-widest mr-2">Recent:</span>
+          {workflowStats.recentStatus.map((status: string, i: number) => (
+            <div 
+              key={i} 
+              className={`w-2 h-4 rounded-sm ${status === 'COMPLETED' ? 'bg-emerald-500' : status === 'FAILED' ? 'bg-red-500' : 'bg-amber-500'}`}
+              title={status}
+            />
+          ))}
+          {workflowStats.recentStatus.length === 0 && <span className="text-slate-700 italic">No executions</span>}
+        </div>
+      </div>
+
       <div className="flex-1 flex overflow-hidden">
         {/* Toolbox */}
         <div className="w-16 glass-card !rounded-none !border-y-0 !border-l-0 flex flex-col items-center py-6 gap-6 z-10">
           <button 
             onClick={() => {
-              const newId = Math.random().toString(36).substr(2, 9);
+              const newId = crypto.randomUUID();
               setNodes((nds) => [
                 ...nds, 
                 { 
                   id: newId, 
                   type: 'step', 
                   position: { x: 400, y: 300 }, 
-                  data: { label: 'New Step', type: 'TASK', onEdit: () => setSelectedNodeId(newId) } 
+                  data: { label: 'New Step', type: 'TASK', isNew: true, onEdit: () => setSelectedNodeId(newId) } 
                 }
               ]);
             }}
@@ -314,6 +394,17 @@ const WorkflowEditorPage: React.FC = () => {
           onSave={handleSaveStep}
         />
       </div>
+
+      {/* Input Schema Editor Modal */}
+      {showSchemaEditor && workflow && (
+        <InputSchemaEditor
+          workflow={workflow}
+          onClose={() => setShowSchemaEditor(false)}
+          onSave={(schema) => {
+            queryClient.invalidateQueries({ queryKey: ['workflow', id] });
+          }}
+        />
+      )}
     </div>
   );
 };

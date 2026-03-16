@@ -1,7 +1,7 @@
 import React from 'react';
 import { Node } from 'reactflow';
 import { WorkflowNodeData } from '../../types/editor';
-import { X, Save, Trash2, Plus, ArrowRight } from 'lucide-react';
+import { X, Save, Trash2, Plus, ArrowRight, ChevronUp, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface EditorSidebarProps {
@@ -25,8 +25,8 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
 }) => {
   const [rules, setRules] = React.useState<any[]>([]);
   
-  // Quick hack: Since we just need string IDs assuming short IDs mean "uncreated" yet
-  const isNewStep = selectedNode?.id?.length ? selectedNode.id.length < 15 : true;
+  // Use the explicit isNew flag to determine if the backend has this step yet
+  const isNewStep = selectedNode?.data?.isNew ?? false;
 
   React.useEffect(() => {
     if (!isNewStep && selectedNode?.id) {
@@ -44,7 +44,7 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
   }, [selectedNode?.id, isNewStep, workflowId]);
 
   const addRule = () => {
-    setRules([...rules, { id: Math.random().toString(), condition: '', nextStepId: '', isDefault: false }]);
+    setRules([...rules, { id: crypto.randomUUID(), condition: '', nextStepId: '', isDefault: false, isNew: true }]);
   };
 
   const saveRule = async (rule: any) => {
@@ -55,16 +55,26 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
     const { ruleApi } = await import('../../api/rule.api');
     try {
       const isValidUuid = (val: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
-      const nextStepId = rule.nextStepId && rule.nextStepId !== '__end__' && isValidUuid(rule.nextStepId) ? rule.nextStepId : null;
+      
+      let nextStepId = rule.nextStepId;
+      if (nextStepId === '__end__' || !nextStepId) {
+        nextStepId = null;
+      }
+
+      if (nextStepId !== null && !isValidUuid(nextStepId)) {
+        toast.error('Please save the target step first before creating rules pointing to it');
+        return;
+      }
+
       const payload = {
         condition: rule.condition || 'DEFAULT',
         nextStepId,
         priority: rule.priority || null,
         isDefault: rule.isDefault || false,
       };
-      if (rule.id.length < 15) {
+      if (rule.isNew) {
         const res = await ruleApi.createRule(workflowId, selectedNode!.id, payload);
-        setRules(rules.map(r => r.id === rule.id ? res.data.data : r));
+        setRules(rules.map(r => r.id === rule.id ? { ...res.data.data, isNew: false } : r));
         toast.success('Rule created successfully');
       } else {
         await ruleApi.updateRule(workflowId, selectedNode!.id, rule.id, payload);
@@ -77,7 +87,8 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
 
   const deleteRule = async (ruleId: string) => {
     try {
-      if (ruleId.length > 15) {
+      const rule = rules.find(r => r.id === ruleId);
+      if (!rule?.isNew) {
         const { ruleApi } = await import('../../api/rule.api');
         await ruleApi.deleteRule(workflowId, selectedNode!.id, ruleId);
         toast.success('Rule deleted');
@@ -85,6 +96,23 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
       setRules(rules.filter(r => r.id !== ruleId));
     } catch (e: any) {
       toast.error(e.response?.data?.message || 'Failed to delete rule');
+    }
+  };
+
+  const moveRule = (index: number, direction: 'up' | 'down') => {
+    const newRules = [...rules];
+    const swapIdx = direction === 'up' ? index - 1 : index + 1;
+    if (swapIdx < 0 || swapIdx >= newRules.length) return;
+    [newRules[index], newRules[swapIdx]] = [newRules[swapIdx], newRules[index]];
+    // Update priorities
+    newRules.forEach((r, i) => { r.priority = i + 1; });
+    setRules(newRules);
+    // Call backend reorder if rules are saved
+    const savedRuleIds = newRules.filter(r => r.id?.length > 15).map(r => r.id);
+    if (savedRuleIds.length > 1 && selectedNode) {
+      import('../../api/rule.api').then(({ ruleApi }) => {
+        ruleApi.validateCondition(workflowId, selectedNode.id, { ruleIds: savedRuleIds }).catch(() => {});
+      });
     }
   };
 
@@ -141,10 +169,31 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
             {rules.map((rule, idx) => (
               <div key={rule.id} className={`p-4 rounded-xl border space-y-3 ${rule.isDefault ? 'bg-slate-900/50 border-slate-700/50 border-dashed' : 'bg-slate-900/50 border-slate-700'}`}>
                 <div className="flex items-center justify-between">
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${rule.isDefault ? 'text-slate-500 bg-slate-500/10 uppercase' : 'text-cyan-500 bg-cyan-500/10'}`}>
-                    {rule.isDefault ? 'Default Fallback' : 'IF CONDITION'}
-                  </span>
-                  <Trash2 onClick={() => deleteRule(rule.id)} className="w-3.5 h-3.5 text-slate-600 hover:text-red-500 cursor-pointer transition-colors" />
+                  <div className="flex items-center gap-2">
+                    <span className="w-5 h-5 rounded-full bg-slate-800 text-[9px] text-slate-400 font-bold flex items-center justify-center">{idx + 1}</span>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${rule.isDefault ? 'text-slate-500 bg-slate-500/10 uppercase' : 'text-cyan-500 bg-cyan-500/10'}`}>
+                      {rule.isDefault ? 'Default Fallback' : 'IF CONDITION'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => moveRule(idx, 'up')}
+                      disabled={idx === 0}
+                      className="p-0.5 rounded hover:bg-slate-800 transition-colors disabled:opacity-20"
+                      title="Move up (higher priority)"
+                    >
+                      <ChevronUp size={12} className="text-slate-400" />
+                    </button>
+                    <button
+                      onClick={() => moveRule(idx, 'down')}
+                      disabled={idx === rules.length - 1}
+                      className="p-0.5 rounded hover:bg-slate-800 transition-colors disabled:opacity-20"
+                      title="Move down (lower priority)"
+                    >
+                      <ChevronDown size={12} className="text-slate-400" />
+                    </button>
+                    <Trash2 onClick={() => deleteRule(rule.id)} className="w-3.5 h-3.5 text-slate-600 hover:text-red-500 cursor-pointer transition-colors ml-1" />
+                  </div>
                 </div>
                 {!rule.isDefault && (
                   <input 

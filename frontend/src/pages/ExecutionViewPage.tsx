@@ -188,62 +188,121 @@ const ExecutionViewPage: React.FC = () => {
           </AnimatePresence>
         </div>
 
-        {/* Sidebar: Logs & Data */}
+        {/* Sidebar: Timeline & Data */}
         <div className="w-96 glass border-l border-slate-700/50 h-full flex flex-col">
           <div className="p-6 border-b border-slate-700/50">
             <div className="flex items-center gap-2 text-cyan-500 mb-2">
               <Terminal size={18} />
-              <h2 className="text-sm font-bold uppercase tracking-widest">Execution Logs</h2>
+              <h2 className="text-sm font-bold uppercase tracking-widest">Execution Timeline</h2>
+            </div>
+            <div className="flex items-center gap-3 text-[10px] text-slate-500">
+              <span>{execution?.logs?.length || 0} steps traced</span>
+              <span>·</span>
+              <span>{execution?.status}</span>
             </div>
           </div>
           
-          <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar font-mono">
-            {execution?.logs.map((log: any, i: number) => (
-              <div key={i} className="text-[11px] p-3 rounded-lg bg-slate-900/50 border border-slate-800/50 space-y-2">
-                <div className="flex justify-between items-center text-[10px]">
-                  <span className="text-slate-500">[{formatDate(log.timestamp)}]</span>
-                  <span className={`px-1.5 py-0.5 rounded-md font-bold ${
-                    log.status === 'COMPLETED' ? 'text-emerald-500 bg-emerald-500/10' :
-                    log.status === 'FAILED' ? 'text-red-400 bg-red-400/10' :
-                    'text-cyan-500 bg-cyan-500/10'
-                  }`}>
-                    {log.stepName || 'SYSTEM'}
-                  </span>
-                </div>
+          <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
+            <div className="relative">
+              {/* Timeline connector line */}
+              <div className="absolute left-[15px] top-3 bottom-3 w-px bg-gradient-to-b from-cyan-500/40 via-slate-700/40 to-slate-800/20" />
+              
+              {execution?.logs?.map((log: any, i: number) => {
+                const isLast = i === (execution.logs?.length || 0) - 1;
+                const isCurrent = isLast && !['COMPLETED', 'FAILED', 'CANCELLED'].includes(execution.status);
+                const statusIcon = log.status === 'COMPLETED' ? '✓' : log.status === 'FAILED' ? '✗' : isCurrent ? '◉' : '○';
+                const statusColor = log.status === 'COMPLETED' ? 'bg-emerald-500 text-white border-emerald-400' 
+                  : log.status === 'FAILED' ? 'bg-red-500 text-white border-red-400' 
+                  : isCurrent ? 'bg-amber-500 text-white border-amber-400' 
+                  : 'bg-slate-700 text-slate-300 border-slate-600';
                 
-                <p className="text-slate-300 leading-relaxed">
-                  <span className="text-slate-500">{'>'}</span> {log.action || (log.status ? `Step ${log.status}` : 'Update')}
-                  {log.details && <span className="text-slate-400 block mt-1 ml-3 border-l border-slate-800 pl-2">{log.details}</span>}
-                </p>
+                return (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.08 }}
+                    className="relative pl-10 pb-6 last:pb-0"
+                  >
+                    {/* Timeline dot */}
+                    <div className={`absolute left-[7px] top-1 w-[18px] h-[18px] rounded-full border-2 flex items-center justify-center text-[9px] font-bold z-10 ${statusColor}`}>
+                      {statusIcon}
+                    </div>
+                    {isCurrent && (
+                      <div className="absolute left-[3px] top-[-3px] w-[26px] h-[26px] rounded-full border border-amber-500/40 animate-ping" />
+                    )}
 
-                {log.evaluatedRules && log.evaluatedRules.length > 0 && (
-                  <div className="mt-2 pt-2 border-t border-slate-800/50">
-                    <p className="text-[9px] text-slate-500 mb-1 uppercase font-bold">Rules Evaluated:</p>
-                    {log.evaluatedRules.map((rule: any, idx: number) => (
-                      <div key={idx} className="flex items-center gap-2 mb-1">
-                        <span className={rule.result ? 'text-emerald-500' : 'text-slate-600'}>
-                          {rule.result ? '✓' : '×'}
+                    {/* Step card */}
+                    <div className={`rounded-xl border p-3 space-y-2 ${isCurrent ? 'bg-amber-500/5 border-amber-500/20' : 'bg-slate-900/50 border-slate-800/50'}`}>
+                      {/* Header */}
+                      <div className="flex items-center justify-between">
+                        <span className={`text-xs font-bold ${
+                          log.status === 'COMPLETED' ? 'text-emerald-400' :
+                          log.status === 'FAILED' ? 'text-red-400' :
+                          isCurrent ? 'text-amber-400' : 'text-slate-300'
+                        }`}>
+                          {log.stepName || 'SYSTEM'}
                         </span>
-                        <span className="text-slate-400 text-[10px]">{rule.condition}:</span>
-                        <span className={rule.result ? 'text-emerald-400 font-bold' : 'text-slate-600'}>
-                          {rule.result ? 'TRUE' : 'FALSE'}
-                        </span>
+                        <span className="text-[9px] text-slate-600 font-mono">{formatDate(log.timestamp)}</span>
                       </div>
-                    ))}
-                  </div>
-                )}
 
-                {log.selectedNextStep && (
-                  <div className="flex items-center gap-2 text-[10px] text-cyan-500">
-                    <span>↪</span>
-                    <span>Next: {log.selectedNextStep}</span>
-                  </div>
-                )}
-              </div>
-            ))}
-            {(!execution?.logs || execution.logs.length === 0) && (
-              <p className="text-slate-600 text-xs italic">No logs available for this execution.</p>
-            )}
+                      {/* Action */}
+                      <p className="text-[11px] text-slate-400">
+                        {log.action || (log.status ? `Step ${log.status.toLowerCase()}` : 'Processing...')}
+                      </p>
+                      {log.details && <p className="text-[10px] text-slate-500 border-l-2 border-slate-800 pl-2">{log.details}</p>}
+                      
+                      {/* Evaluated Rules */}
+                      {log.evaluatedRules && log.evaluatedRules.length > 0 && (
+                        <div className="mt-1 pt-2 border-t border-slate-800/50">
+                          <p className="text-[9px] text-slate-500 mb-1.5 uppercase font-bold tracking-wider">Rules Evaluated</p>
+                          <div className="space-y-1">
+                            {log.evaluatedRules.map((rule: any, idx: number) => (
+                              <div key={idx} className={`flex items-center gap-2 px-2 py-1 rounded-lg text-[10px] ${
+                                rule.result ? 'bg-emerald-500/10 border border-emerald-500/10' : 'bg-slate-800/30'
+                              }`}>
+                                <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold ${
+                                  rule.result ? 'bg-emerald-500 text-white' : 'bg-slate-700 text-slate-500'
+                                }`}>
+                                  {rule.result ? '✓' : '✗'}
+                                </span>
+                                <span className={rule.result ? 'text-emerald-300 font-medium' : 'text-slate-500'}>{rule.condition}</span>
+                                <span className={`ml-auto font-bold ${rule.result ? 'text-emerald-400' : 'text-slate-600'}`}>
+                                  {rule.result ? 'TRUE' : 'FALSE'}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Next Step */}
+                      {log.selectedNextStep && (
+                        <div className="flex items-center gap-2 mt-1 px-2 py-1 rounded-lg bg-cyan-500/5 border border-cyan-500/10">
+                          <span className="text-cyan-500 text-[10px]">↪</span>
+                          <span className="text-[10px] text-cyan-400 font-medium">Next: {log.selectedNextStep}</span>
+                        </div>
+                      )}
+
+                      {/* Duration */}
+                      {log.started_at && log.ended_at && (
+                        <div className="flex items-center gap-1 text-[9px] text-slate-600">
+                          <Clock size={8} />
+                          {Math.round((new Date(log.ended_at).getTime() - new Date(log.started_at).getTime()) / 1000)}s
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                );
+              })}
+              {(!execution?.logs || execution.logs.length === 0) && (
+                <div className="text-center py-12">
+                  <Terminal className="w-8 h-8 text-slate-700 mx-auto mb-2" />
+                  <p className="text-slate-600 text-xs italic">No activity recorded yet.</p>
+                  <p className="text-slate-700 text-[10px] mt-1">Steps will appear here as they execute.</p>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="p-6 border-t border-slate-700/50 bg-slate-900/30">

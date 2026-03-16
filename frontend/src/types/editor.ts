@@ -5,6 +5,7 @@ export interface WorkflowNodeData {
   label: string;
   type: 'TASK' | 'APPROVAL' | 'NOTIFICATION';
   metadata: Record<string, any>;
+  isNew?: boolean;
   onEdit: (data: any) => void;
 }
 

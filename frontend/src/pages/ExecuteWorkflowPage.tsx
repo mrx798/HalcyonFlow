@@ -114,8 +114,8 @@ const ExecuteWorkflowPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-8 pb-10">
-      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
+    <div className="max-w-4xl mx-auto pb-10">
+      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
         <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-slate-400 hover:text-white mb-4 transition-colors text-sm">
           <ChevronLeft size={16} /> Back to Workflow
         </button>
@@ -130,41 +130,91 @@ const ExecuteWorkflowPage: React.FC = () => {
         </div>
       </motion.div>
 
-      <form onSubmit={handleExecute} className="glass-card p-8 space-y-6">
-        {schemaEntries.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-slate-400 text-sm">This workflow has no input parameters.</p>
-            <p className="text-slate-500 text-xs mt-1">It will execute with an empty context.</p>
-          </div>
-        ) : (
-          <>
-            <h2 className="text-sm font-bold text-slate-500 uppercase tracking-widest">Input Parameters</h2>
-            <div className="space-y-5">
-              {schemaEntries.map(([key, schema]: [string, any]) => (
-                <div key={key} className="space-y-1.5">
-                  <label className="text-sm text-slate-300 font-medium flex items-center gap-2">
-                    {key}
-                    {schema.required && <span className="text-red-400 text-xs">*</span>}
-                    <span className="text-[10px] text-slate-600 bg-slate-800 px-2 py-0.5 rounded-full font-mono">{schema.type || 'string'}</span>
-                  </label>
-                  {renderField(key, schema)}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Form Panel */}
+        <div className="lg:col-span-2">
+          <form onSubmit={handleExecute} className="glass-card p-8 space-y-6">
+            {schemaEntries.length === 0 ? (
+              <div className="text-center py-12">
+                <Zap className="w-12 h-12 text-slate-700 mx-auto mb-3" />
+                <p className="text-slate-400">This workflow has no input parameters.</p>
+                <p className="text-slate-500 text-sm mt-1">It will execute with an empty context.</p>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest">Input Parameters</h2>
+                  <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full">{schemaEntries.length} Fields</span>
                 </div>
-              ))}
-            </div>
-          </>
-        )}
+                <div className="space-y-6">
+                  {schemaEntries.map(([key, schema]: [string, any]) => {
+                    const error = schema.required && !formData[key] && formData[key] !== 0 && formData[key] !== false;
+                    return (
+                      <div key={key} className="space-y-2">
+                        <label className="text-sm text-slate-300 font-medium flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            {key}
+                            {schema.required && <span className="text-red-400 text-xs" title="Required">*</span>}
+                          </div>
+                          <span className="text-[10px] text-slate-500 bg-slate-800/50 px-2 py-0.5 rounded-lg border border-slate-700/50 uppercase tracking-wider">{schema.type || 'string'}</span>
+                        </label>
+                        <div className={error && Object.keys(formData).includes(key) ? "ring-1 ring-red-500/50 rounded-lg" : ""}>
+                          {renderField(key, schema)}
+                        </div>
+                        {error && Object.keys(formData).includes(key) && (
+                          <p className="text-[10px] text-red-400 mt-1">This field is required.</p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
 
-        <div className="pt-4 border-t border-slate-700/50">
-          <button
-            type="submit"
-            disabled={isExecuting}
-            className="w-full btn-primary flex items-center justify-center gap-2 py-3 text-sm disabled:opacity-50"
-          >
-            <Play size={16} className="fill-white" />
-            {isExecuting ? 'Starting Execution...' : 'Start Execution'}
-          </button>
+            <div className="pt-6 border-t border-slate-700/50 mt-8">
+              <button
+                type="submit"
+                disabled={isExecuting}
+                className="w-full btn-primary flex items-center justify-center gap-2 py-3.5 text-sm disabled:opacity-50 disabled:cursor-not-allowed group"
+              >
+                {isExecuting ? (
+                  <>
+                    <div className="w-4 h-4 rounded-full border-2 border-white/20 border-t-white animate-spin" />
+                    Starting Execution...
+                  </>
+                ) : (
+                  <>
+                    <Play size={16} className="fill-white group-hover:scale-110 transition-transform" />
+                    Start Execution
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
         </div>
-      </form>
+
+        {/* Live Payload Preview */}
+        <div className="lg:col-span-1 space-y-4">
+          <div className="glass flex flex-col h-full border border-slate-700/50 rounded-2xl overflow-hidden">
+            <div className="bg-slate-900/80 p-4 border-b border-slate-700/50 flex items-center gap-2">
+              <div className="flex gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full bg-red-500/80"></div>
+                <div className="w-2.5 h-2.5 rounded-full bg-amber-500/80"></div>
+                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/80"></div>
+              </div>
+              <span className="text-xs font-mono text-slate-400 ml-2">Live Payload Preview</span>
+            </div>
+            <div className="flex-1 p-4 bg-slate-950/50 font-mono text-xs overflow-auto">
+              <pre className="text-emerald-400/80">
+                {JSON.stringify({
+                  workflowId: id,
+                  inputData: formData
+                }, null, 2)}
+              </pre>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
