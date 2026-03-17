@@ -185,9 +185,11 @@ const WorkflowListPage: React.FC = () => {
                       <Zap className="w-6 h-6" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-bold text-slate-200 group-hover:text-cyan-400 transition-colors">
-                        {workflow.name}
-                      </h3>
+                      <Link to={`/workflows/${workflow.id}`}>
+                        <h3 className="text-lg font-bold text-slate-200 group-hover:text-cyan-400 transition-colors">
+                          {workflow.name}
+                        </h3>
+                      </Link>
                       <p className="text-slate-400 text-sm mt-0.5 line-clamp-1">{workflow.description}</p>
                     </div>
                   </div>
@@ -221,9 +223,10 @@ const WorkflowListPage: React.FC = () => {
                     </button>
                     <Link 
                       to={`/workflows/${workflow.id}`}
-                      className="p-2 rounded-lg bg-cyan-600/10 text-cyan-500 hover:bg-cyan-600/20 transition-all"
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-cyan-600/10 text-cyan-500 hover:bg-cyan-600/20 transition-all text-xs font-bold uppercase tracking-widest"
                     >
                       <Edit3 className="w-4 h-4" />
+                      <span>[Edit]</span>
                     </Link>
                   </div>
                 </div>
