@@ -1,67 +1,46 @@
-# FlowForge — Workflow Automation Platform
+# FlowForge — Advanced Workflow Automation Platform
 
-FlowForge is a robust, full-stack workflow automation platform designed for enterprise scalability. It enables users to define complex workflows, set conditional rules with a custom expression engine, and execute tasks with real-time feedback.
+FlowForge is a high-performance, full-stack workflow automation engine built for the **Halleyx Full Stack Engineer Challenge 2026**. It allows users to design, validate, and execute complex multi-step processes with conditional logic and real-time monitoring.
 
-## 🚀 Features
+## ✨ 2026 Challenge Features (Recently Completed)
 
-- **Dynamic Workflow Builder**: Create and manage multi-step workflows.
-- **Advanced Rule Engine**: Define logic using complex conditions (e.g., `amount > 5000 AND department == 'Sales'`).
-- **Real-time Execution**: Async processing with detailed logging and state management.
-- **Secure Authentication**: JWT-based security with Role-Based Access Control (RBAC).
-- **Comprehensive Dashboard**: Monitor stats, recent executions, and notifications.
+- **Audit Log System**: Precision tracking of every execution with detailed status, timestamps, and triggered users.
+- **Visual Workflow Editor**: Stateful ReactFlow canvas with drag-and-drop mechanics and auto-layout.
+- **Infinite Loop Protection**: Smart engine tracking that prevents cycles by enforcing per-step execution limits.
+- **Workflow Validation**: Integrated "dry-run" validation that checks for logical gaps, unreachable steps, and missing configurations before execution.
+- **Paginated Management**: Server-side pagination and debounced search for efficient handling of large workflow repositories.
+- **Elastic Rule Engine**: Custom expression evaluator supporting relational operators (`>`, `<`, `==`) and complex data schemas.
 
-## 🛠️ Tech Stack
+## 🛠️ Technical Architecture
 
-- **Backend**: Spring Boot 3.2, Java 21, JPA/Hibernate, PostgreSQL, Flyway.
-- **Frontend**: React 18, TypeScript, Vite, TailwindCSS, Lucide Icons.
-- **Infrastructure**: Docker & Docker Compose.
-- **Testing**: JUnit 5, Mockito, MockMvc, H2.
+- **Backend**: Spring Boot 3.2 (Java 21) | JPA | PostgreSQL | Flyway Migrations | Swagger/OAS 3.0.
+- **Frontend**: React 18 (TypeScript) | Vite | TailwindCSS | ReactFlow | TanStack Query v5.
+- **Security**: Stateless JWT Authentication with custom UserDetails and Secure Context management.
 
-## 📦 Quick Start
+## 📂 Project Structure
+
+- `backend/`: Core logic, REST APIs, and the Workflow Rule Engine.
+- `frontend/`: Modern responsive UI for workflow design and execution.
+- `docs/sample-workflows/`: Pre-configured JSON templates (Employee Onboarding, Expense Approval).
+
+## 🚀 Getting Started
 
 ### Prerequisites
 - Docker & Docker Compose
-- Java 21 (for manual build)
-- Node 20 (for manual build)
+- Java 21 (optional for local build)
+- Node 20+ (optional for local build)
 
-### 1. Using Docker (Recommended)
+### Quick Run (Docker)
 ```bash
 docker-compose up --build
 ```
-- Frontend: `http://localhost:3000`
-- Backend API: `http://localhost:8080/api/v1`
-- Swagger Docs: `http://localhost:8080/swagger-ui.html`
+- **Login**: `admin@flowforge.com` / `password123` (or register a new account).
 
-### 2. Manual Setup
-**Backend:**
-```bash
-cd backend
-mvn clean install
-mvn spring-boot:run
-```
-**Frontend:**
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-## 🧪 Running Tests
-```bash
-cd backend
-mvn test
-```
-Includes 20+ unit tests for the Rule Engine and full integration tests for Workflow CRUD.
-
-## 📂 Project Structure
-- `backend/`: Spring Boot application.
-- `frontend/`: React application.
-- `samples/`: Sample workflow JSON definitions.
-- `postman/`: Postman collection for API testing.
-
-## 🔑 Default Credentials
-- **Email**: `admin@flowforge.com`
-- **Password**: `admin123` (Note: Register a new user via the UI/API for first-time use).
+## 🔑 Key Endpoints
+- **Swagger UI**: `http://localhost:8080/swagger-ui/index.html`
+- **Audit Logs**: `GET /api/v1/executions` (Paginated)
+- **Validation**: `POST /api/v1/workflows/{id}/validate`
 
 ---
-Developed for the Company Placement Challenge.
+*Developed for the Halleyx Challenge by Antigravity (Advanced Agentic Coding).*
+

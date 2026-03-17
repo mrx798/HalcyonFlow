@@ -5,6 +5,7 @@ import com.flowforge.backend.dto.request.ExecuteWorkflowRequest;
 import com.flowforge.backend.dto.response.DashboardStatsResponse;
 import com.flowforge.backend.dto.response.ExecutionResponse;
 import com.flowforge.backend.dto.response.ExecutionSummaryResponse;
+import com.flowforge.backend.engine.ExpressionParser;
 import com.flowforge.backend.engine.RuleEngine;
 import com.flowforge.backend.engine.StepExecutor;
 import com.flowforge.backend.entity.Execution;
@@ -36,6 +37,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,7 +49,6 @@ import java.util.stream.Collectors;
 @SuppressWarnings("null")
 public class ExecutionService {
     private static final Logger log = LoggerFactory.getLogger(ExecutionService.class);
-    private static final int MAX_ITERATIONS = 50;
 
     private final ExecutionRepository executionRepository;
     private final WorkflowRepository workflowRepository;
@@ -56,6 +57,7 @@ public class ExecutionService {
     private final RuleEngine ruleEngine;
     private final StepExecutor stepExecutor;
     private final NotificationService notificationService;
+    private final ExpressionParser expressionParser = new ExpressionParser();
 
     @Transactional
     public ExecutionResponse startExecution(ExecuteWorkflowRequest request, @NonNull UUID userId) {
@@ -155,16 +157,41 @@ public class ExecutionService {
             return;
         }
 
-        int iterations = 0;
+        int maxIterations = workflow.getMaxIterations() != null ? workflow.getMaxIterations() : 50;
+        int totalIterations = 0;
 
-        while (currentStepId != null && iterations < MAX_ITERATIONS) {
-            iterations++;
+        // Restore step visit counts from previous iterations/retries
+        Map<UUID, Integer> stepVisits = new java.util.HashMap<>();
+        if (execution.getLogs() != null) {
+            for (Map<String, Object> logEntry : execution.getLogs()) {
+                if (logEntry.containsKey("stepId") && "completed".equalsIgnoreCase(String.valueOf(logEntry.get("status")))) {
+                    try {
+                        UUID sid = UUID.fromString(logEntry.get("stepId").toString());
+                        stepVisits.put(sid, stepVisits.getOrDefault(sid, 0) + 1);
+                    } catch (Exception ignored) {}
+                }
+            }
+        }
+
+        while (currentStepId != null) {
+            totalIterations++;
+            if (totalIterations > 1000) {
+                 failExecution(execution, "Global failsafe iteration limit reached. Possible infinite loop.");
+                 return;
+            }
 
             Step currentStep = stepRepository.findById(currentStepId).orElse(null);
             if (currentStep == null) {
                 failExecution(execution, "Step not found: " + currentStepId);
                 return;
             }
+
+            int currentVisits = stepVisits.getOrDefault(currentStepId, 0);
+            if (currentVisits >= maxIterations) {
+                failExecution(execution, "Maximum iteration limit (" + maxIterations + ") reached for step '" + currentStep.getName() + "'. Possible infinite loop.");
+                return;
+            }
+            stepVisits.put(currentStepId, currentVisits + 1);
 
             execution.setCurrentStepId(currentStepId);
             execution = executionRepository.save(execution);
@@ -178,11 +205,11 @@ public class ExecutionService {
             // Build log entry
             Map<String, Object> logEntry = new LinkedHashMap<>();
             logEntry.put("stepId", currentStep.getId().toString());
-            logEntry.put("stepName", currentStep.getName());
-            logEntry.put("stepType", currentStep.getStepType().name());
-            logEntry.put("status", stepResult.status());
-            logEntry.put("startedAt", stepStartTime.toString());
-            logEntry.put("endedAt", LocalDateTime.now().toString());
+            logEntry.put("step_name", currentStep.getName());
+            logEntry.put("step_type", currentStep.getStepType().toString().toLowerCase());
+            logEntry.put("status", stepResult.status().toLowerCase());
+            logEntry.put("started_at", stepStartTime.toString());
+            logEntry.put("ended_at", LocalDateTime.now().toString());
 
             if (stepResult.requiresApproval()) {
                 logEntry.put("assigneeEmail", stepResult.assigneeEmail());
@@ -204,23 +231,39 @@ public class ExecutionService {
             List<Rule> rules = currentStep.getRules();
             RuleEngine.RuleEvaluationResult ruleResult = ruleEngine.evaluate(rules, execution.getInputData());
 
-            // Log rule evaluations
-            List<Map<String, Object>> ruleEvalLogs = new ArrayList<>();
-            for (RuleEngine.RuleEvalLog evalLog : ruleResult.evaluatedRules()) {
+            // Record each rule evaluation
+            List<Map<String, Object>> evaluatedRules = new ArrayList<>();
+            List<Rule> sortedRules = rules.stream()
+                    .sorted(Comparator.comparingInt(Rule::getPriority))
+                    .collect(Collectors.toList());
+
+            boolean selectedByDefault = ruleResult.matched() && "DEFAULT".equals(ruleResult.matchedRule().getCondition());
+
+            for (Rule rule : sortedRules) {
                 Map<String, Object> ruleLog = new LinkedHashMap<>();
-                ruleLog.put("ruleId", evalLog.ruleId().toString());
-                ruleLog.put("condition", evalLog.condition());
-                ruleLog.put("result", evalLog.result());
-                ruleLog.put("priority", evalLog.priority());
-                ruleEvalLogs.add(ruleLog);
+                ruleLog.put("rule", rule.getCondition());
+
+                if ("DEFAULT".equals(rule.getCondition())) {
+                    ruleLog.put("result", selectedByDefault);
+                } else {
+                    boolean res;
+                    try {
+                        res = expressionParser.evaluate(rule.getCondition(), execution.getInputData());
+                    } catch (Exception e) {
+                        res = false;
+                    }
+                    ruleLog.put("result", res);
+                }
+                evaluatedRules.add(ruleLog);
             }
-            logEntry.put("evaluatedRules", ruleEvalLogs);
+
+            logEntry.put("evaluated_rules", evaluatedRules);
 
             if (!ruleResult.matched()) {
                 // No matching rule — check if step has any rules at all
                 if (rules == null || rules.isEmpty()) {
                     // No rules defined — workflow complete after this step
-                    logEntry.put("selectedNextStep", null);
+                    logEntry.put("selected_next_step", null);
                     execution.getLogs().add(logEntry);
                     completeExecution(execution);
                     return;
@@ -232,13 +275,12 @@ public class ExecutionService {
             }
 
             UUID nextStepId = ruleResult.nextStepId();
-
+            String nameOfNextStep = null;
             if (nextStepId != null) {
                 Step nextStep = stepRepository.findById(nextStepId).orElse(null);
-                logEntry.put("selectedNextStep", nextStep != null ? nextStep.getName() : "Unknown");
-            } else {
-                logEntry.put("selectedNextStep", null);
+                nameOfNextStep = nextStep != null ? nextStep.getName() : "Unknown";
             }
+            logEntry.put("selected_next_step", nameOfNextStep);
 
             execution.getLogs().add(logEntry);
             execution = executionRepository.save(execution);
@@ -250,10 +292,6 @@ public class ExecutionService {
             }
 
             currentStepId = nextStepId;
-        }
-
-        if (iterations >= MAX_ITERATIONS) {
-            failExecution(execution, "Maximum iteration limit (" + MAX_ITERATIONS + ") reached. Possible infinite loop.");
         }
     }
 
@@ -285,14 +323,35 @@ public class ExecutionService {
         User approver = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId.toString()));
 
-        // Log the approval action
-        Map<String, Object> approvalLog = new LinkedHashMap<>();
-        approvalLog.put("action", Boolean.TRUE.equals(request.getApproved()) ? "APPROVED" : "REJECTED");
-        approvalLog.put("approverId", userId.toString());
-        approvalLog.put("approverName", approver.getName());
-        approvalLog.put("comment", request.getComment());
-        approvalLog.put("timestamp", LocalDateTime.now().toString());
-        execution.getLogs().add(approvalLog);
+        // Log the approval action within the existing step log
+        Map<String, Object> targetLog = null;
+        for (int i = execution.getLogs().size() - 1; i >= 0; i--) {
+            Map<String, Object> logEntry = execution.getLogs().get(i);
+            if (stepId.toString().equals(logEntry.get("stepId"))) {
+                targetLog = logEntry;
+                break;
+            }
+        }
+
+        if (targetLog != null) {
+            targetLog.put("status", Boolean.TRUE.equals(request.getApproved()) ? "COMPLETED" : "FAILED");
+            targetLog.put("approverId", userId.toString());
+            targetLog.put("approverName", approver.getName());
+            targetLog.put("approvalComment", request.getComment());
+            targetLog.put("endedAt", LocalDateTime.now().toString());
+            if (!Boolean.TRUE.equals(request.getApproved())) {
+                targetLog.put("errorMessage", "Rejected by " + approver.getName());
+            }
+        } else {
+            // Fallback if not found for some reason
+            Map<String, Object> approvalLog = new LinkedHashMap<>();
+            approvalLog.put("action", Boolean.TRUE.equals(request.getApproved()) ? "APPROVED" : "REJECTED");
+            approvalLog.put("approverId", userId.toString());
+            approvalLog.put("approverName", approver.getName());
+            approvalLog.put("comment", request.getComment());
+            approvalLog.put("timestamp", LocalDateTime.now().toString());
+            execution.getLogs().add(approvalLog);
+        }
 
         if (Boolean.TRUE.equals(request.getApproved())) {
             // Get the current step's rules to find next step
@@ -305,6 +364,29 @@ public class ExecutionService {
             UUID nextStepId = null;
             if (ruleResult.matched()) {
                 nextStepId = ruleResult.nextStepId();
+            }
+
+            // Also record evaluated rules for approval steps
+            List<Map<String, Object>> ruleEvalLogs = new ArrayList<>();
+            for (RuleEngine.RuleEvalLog evalLog : ruleResult.evaluatedRules()) {
+                Map<String, Object> ruleLog = new LinkedHashMap<>();
+                ruleLog.put("ruleId", evalLog.ruleId().toString());
+                ruleLog.put("condition", evalLog.condition());
+                ruleLog.put("result", evalLog.result());
+                ruleLog.put("priority", evalLog.priority());
+                if (evalLog.error() != null) {
+                    ruleLog.put("error", evalLog.error());
+                }
+                ruleEvalLogs.add(ruleLog);
+            }
+            if (targetLog != null) {
+                targetLog.put("evaluatedRules", ruleEvalLogs);
+                if (nextStepId != null) {
+                    Step nextStep = stepRepository.findById(nextStepId).orElse(null);
+                    targetLog.put("selectedNextStep", nextStep != null ? nextStep.getName() : "Unknown");
+                } else {
+                    targetLog.put("selectedNextStep", null);
+                }
             }
 
             if (nextStepId != null) {
@@ -361,6 +443,22 @@ public class ExecutionService {
             throw new RuntimeException("Only failed executions can be retried. Current status: " + execution.getStatus());
         }
 
+        // Find which step failed from the logs
+        String failedStepIdStr = null;
+        for (int i = execution.getLogs().size() - 1; i >= 0; i--) {
+            Map<String, Object> logEntry = execution.getLogs().get(i);
+            if ("FAILED".equals(logEntry.get("status")) || logEntry.containsKey("errorMessage")) {
+                failedStepIdStr = (String) logEntry.get("stepId");
+                if (failedStepIdStr != null) {
+                    break;
+                }
+            }
+        }
+
+        if (failedStepIdStr != null) {
+            execution.setCurrentStepId(UUID.fromString(failedStepIdStr));
+        }
+
         execution.setRetries(execution.getRetries() + 1);
         execution.setStatus(ExecutionStatus.PENDING);
         execution.setErrorMessage(null);
@@ -371,10 +469,13 @@ public class ExecutionService {
         retryLog.put("action", "RETRY");
         retryLog.put("retryCount", execution.getRetries());
         retryLog.put("timestamp", LocalDateTime.now().toString());
+        if (failedStepIdStr != null) {
+            retryLog.put("resumingFromStepId", failedStepIdStr);
+        }
         execution.getLogs().add(retryLog);
         execution = executionRepository.save(execution);
 
-        // Resume from the failed step (currentStepId is still set)
+        // Resume from the failed step
         runExecutionAsync(execution.getId());
 
         return toExecutionResponse(execution);
@@ -582,6 +683,7 @@ public class ExecutionService {
                 .id(execution.getId())
                 .workflowId(execution.getWorkflow().getId())
                 .workflowName(execution.getWorkflow().getName())
+                .workflowVersion(execution.getWorkflow().getVersion())
                 .status(execution.getStatus())
                 .triggeredByName(execution.getTriggeredBy().getName())
                 .startedAt(execution.getStartedAt())

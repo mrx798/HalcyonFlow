@@ -20,6 +20,7 @@ public class ExecutionSummaryResponse {
     private UUID id;
     private UUID workflowId;
     private String workflowName;
+    private Integer workflowVersion;
     private ExecutionStatus status;
     private String triggeredByName;
     private LocalDateTime startedAt;

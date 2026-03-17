@@ -10,6 +10,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Evaluates all rules for a step and returns the first matching rule.
@@ -38,32 +39,65 @@ public class RuleEngine {
             return new RuleEvaluationResult(false, null, null, List.of());
         }
 
-        // Sort: non-default by priority ASC, then DEFAULT last
-        List<Rule> sorted = new ArrayList<>(rules);
-        sorted.sort(Comparator
-                .<Rule, Boolean>comparing(r -> Boolean.TRUE.equals(r.getIsDefault()))
-                .thenComparing(Rule::getPriority));
+        // Step 1: Sort rules by priority ascending (lowest number first)
+        List<Rule> sorted = rules.stream()
+                .sorted(Comparator.comparingInt(Rule::getPriority))
+                .collect(Collectors.toList());
+
+        // Step 2: Separate DEFAULT rule from regular rules
+        Rule defaultRule = null;
+        List<Rule> regularRules = new ArrayList<>();
+
+        for (Rule rule : sorted) {
+            if ("DEFAULT".equals(rule.getCondition())) {
+                defaultRule = rule;
+            } else {
+                regularRules.add(rule);
+            }
+        }
 
         List<RuleEvalLog> evalLogs = new ArrayList<>();
 
-        for (Rule rule : sorted) {
-            boolean result = expressionParser.evaluate(rule.getCondition(), inputData);
+        // Step 3: Evaluate regular rules in priority order
+        for (Rule rule : regularRules) {
+            boolean result = false;
+            String error = null;
+            try {
+                result = expressionParser.evaluate(rule.getCondition(), inputData);
+            } catch (Exception e) {
+                // Log error, treat as false, continue to next rule
+                error = e.getMessage();
+                log.error("Rule evaluation failed for condition '{}': {}", rule.getCondition(), error);
+                result = false;
+            }
+
             evalLogs.add(new RuleEvalLog(
                     rule.getId(),
                     rule.getCondition(),
                     result,
-                    rule.getPriority()
+                    rule.getPriority(),
+                    error
             ));
 
-            log.debug("Rule [{}] condition='{}' priority={} → {}",
-                    rule.getId(), rule.getCondition(), rule.getPriority(), result);
-
+            // Step 4: First TRUE rule wins — return its next step
             if (result) {
                 return new RuleEvaluationResult(true, rule, rule.getNextStepId(), evalLogs);
             }
         }
 
-        // No rule matched
+        // Step 5: No regular rule matched — use DEFAULT
+        if (defaultRule != null) {
+            evalLogs.add(new RuleEvalLog(
+                    defaultRule.getId(),
+                    defaultRule.getCondition(),
+                    true,
+                    defaultRule.getPriority(),
+                    null
+            ));
+            return new RuleEvaluationResult(true, defaultRule, defaultRule.getNextStepId(), evalLogs);
+        }
+
+        // Step 6: No match and no DEFAULT rule
         return new RuleEvaluationResult(false, null, null, evalLogs);
     }
 
@@ -84,6 +118,7 @@ public class RuleEngine {
             UUID ruleId,
             String condition,
             boolean result,
-            int priority
+            int priority,
+            String error
     ) {}
 }

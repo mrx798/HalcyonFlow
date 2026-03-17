@@ -16,7 +16,9 @@ public interface WorkflowRepository extends JpaRepository<Workflow, UUID> {
     
     List<Workflow> findAllByCreatedByIdOrderByCreatedAtDesc(UUID userId);
     
-    Page<Workflow> findAllByCreatedById(UUID userId, Pageable pageable);
+    Page<Workflow> findAllByCreatedByIdOrderByCreatedAtDesc(UUID userId, Pageable pageable);
+    
+    Page<Workflow> findAllByCreatedByIdAndNameContainingIgnoreCaseOrderByCreatedAtDesc(UUID userId, String search, Pageable pageable);
     
     Optional<Workflow> findByIdAndCreatedById(UUID id, UUID userId);
     

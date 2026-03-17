@@ -1,0 +1,54 @@
+{
+  "name": "Expense Approval",
+  "description": "Multi-tier approval logic for company expense reports.",
+  "version": 1,
+  "status": "ACTIVE",
+  "inputSchema": {
+    "reporterEmail": { "type": "string", "required": true },
+    "amount": { "type": "number", "required": true },
+    "category": { "type": "string", "required": true }
+  },
+  "steps": [
+    {
+      "name": "Initial Check",
+      "stepType": "TASK",
+      "metadata": { "action": "validate_receipt" },
+      "rules": [
+        { "condition": "amount > 5000", "nextStepName": "VP Approval" },
+        { "condition": "amount <= 5000", "nextStepName": "Manager Approval" }
+      ]
+    },
+    {
+      "name": "Manager Approval",
+      "stepType": "APPROVAL",
+      "metadata": { "assignee": "manager@flowforge.com" },
+      "rules": [
+        { "condition": "approved == true", "nextStepName": "Finance Payout" },
+        { "condition": "approved == false", "nextStepName": "Reject Notification" }
+      ]
+    },
+    {
+      "name": "VP Approval",
+      "stepType": "APPROVAL",
+      "metadata": { "assignee": "vp@flowforge.com" },
+      "rules": [
+        { "condition": "approved == true", "nextStepName": "Finance Payout" },
+        { "condition": "approved == false", "nextStepName": "Reject Notification" }
+      ]
+    },
+    {
+      "name": "Finance Payout",
+      "stepType": "TASK",
+      "metadata": { "action": "trigger_stripe_payout" },
+      "rules": [
+        { "condition": "DEFAULT", "nextStepName": "Success Notification" }
+      ]
+    },
+    {
+      "name": "Success Notification",
+      "stepType": "NOTIFICATION",
+      "metadata": { "message": "Your expense of ${amount} has been approved and paid." },
+      "rules": []
+    }
+  ]
+}

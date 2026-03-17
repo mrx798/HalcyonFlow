@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { workflowApi } from '../api/workflow.api';
 import { ApiResponse } from '../types/auth';
@@ -12,7 +12,9 @@ import {
   Edit3, 
   Calendar,
   Layers,
-  Zap
+  Zap,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
@@ -35,6 +37,9 @@ const StatusBadge: React.FC<{ status: Workflow['status']; active: boolean }> = (
 
 const WorkflowListPage: React.FC = () => {
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [page, setPage] = useState(0);
+  const [size, setSize] = useState(10);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newWorkflowName, setNewWorkflowName] = useState('');
   const [newWorkflowDesc, setNewWorkflowDesc] = useState('');
@@ -42,13 +47,23 @@ const WorkflowListPage: React.FC = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
-  const { data: workflows, isLoading, refetch } = useQuery<Workflow[]>({
-    queryKey: ['workflows'],
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(0);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  const { data: pageData, isLoading, refetch } = useQuery({
+    queryKey: ['workflows', page, size, debouncedSearch],
     queryFn: async () => {
-      const response = await workflowApi.getWorkflows();
+      const response = await workflowApi.getWorkflows(page, size, debouncedSearch);
       return response.data.data;
     },
   });
+
+  const workflows = pageData?.content || [];
 
   const createMutation = useMutation<Workflow, any, void>({
     mutationFn: async () => {
@@ -75,11 +90,6 @@ const WorkflowListPage: React.FC = () => {
     toast.success(`Workflow toggle action triggered`);
     refetch();
   };
-
-  const filtered = (workflows || []).filter((w: Workflow) => 
-    w.name.toLowerCase().includes(search.toLowerCase()) ||
-    (w.description || '').toLowerCase().includes(search.toLowerCase())
-  );
 
   return (
     <div className="space-y-8">
@@ -160,7 +170,7 @@ const WorkflowListPage: React.FC = () => {
             Array(4).fill(0).map((_, i) => (
               <div key={i} className="glass-card p-6 h-48 animate-pulse bg-slate-800/30" />
             ))
-          ) : filtered.map((workflow, index) => (
+          ) : workflows.map((workflow: Workflow, index: number) => (
             <motion.div
               key={workflow.id}
               initial={{ opacity: 0, x: -20 }}
@@ -223,12 +233,51 @@ const WorkflowListPage: React.FC = () => {
         </AnimatePresence>
       </div>
 
-      {!isLoading && filtered.length === 0 && (
+      {/* Pagination Controls */}
+      {pageData && pageData.totalPages > 0 && (
+        <div className="flex items-center justify-between border-t border-slate-800 pt-6">
+          <div className="flex items-center gap-4 text-sm text-slate-400">
+            <span>
+              Showing {pageData.pageable.offset + 1} to {Math.min(pageData.pageable.offset + pageData.size, pageData.totalElements)} of {pageData.totalElements} results
+            </span>
+            <select 
+              value={size} 
+              onChange={e => { setSize(Number(e.target.value)); setPage(0); }}
+              className="bg-slate-900 border border-slate-700 rounded px-2 py-1 outline-none focus:border-cyan-500"
+            >
+              <option value={10}>10 per page</option>
+              <option value={20}>20 per page</option>
+              <option value={50}>50 per page</option>
+            </select>
+          </div>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => setPage(Math.max(0, page - 1))}
+              disabled={page === 0}
+              className="p-2 rounded border border-slate-700 hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-slate-300"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <span className="text-sm text-slate-300 px-4">
+              Page {page + 1} of {pageData.totalPages}
+            </span>
+            <button 
+              onClick={() => setPage(Math.min(pageData.totalPages - 1, page + 1))}
+              disabled={page >= pageData.totalPages - 1}
+              className="p-2 rounded border border-slate-700 hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-slate-300"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {!isLoading && workflows.length === 0 && (
         <div className="text-center py-20 bg-slate-800/20 rounded-3xl border border-slate-800 border-dashed">
           <Zap className="w-16 h-16 text-slate-700 mx-auto mb-6 opacity-20" />
           <h3 className="text-xl font-bold text-slate-400">No matching workflows</h3>
           <p className="text-slate-500 mt-2">Try adjusting your search or create a new one.</p>
-          <button className="mt-8 text-cyan-500 font-medium hover:underline flex items-center justify-center gap-2 mx-auto">
+          <button onClick={() => setSearch('')} className="mt-8 text-cyan-500 font-medium hover:underline flex items-center justify-center gap-2 mx-auto">
             Clear filters
           </button>
         </div>

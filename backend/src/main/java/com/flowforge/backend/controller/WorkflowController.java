@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.data.domain.Page;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -40,9 +41,12 @@ public class WorkflowController {
 
     @GetMapping
     @Operation(summary = "Get all workflows for the current user")
-    public ResponseEntity<ApiResponse<List<WorkflowResponse>>> getWorkflows() {
+    public ResponseEntity<ApiResponse<Page<WorkflowResponse>>> getWorkflows(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String search) {
         String userEmail = SecurityUtils.getCurrentUserEmail();
-        List<WorkflowResponse> workflows = workflowService.getWorkflows(userEmail);
+        Page<WorkflowResponse> workflows = workflowService.getWorkflows(userEmail, page, size, search);
         return ResponseEntity.ok(ApiResponse.success("Workflows retrieved successfully", workflows));
     }
 

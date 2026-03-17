@@ -30,7 +30,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, setCollapsed }) => {
   const navItems = [
     { title: 'Dashboard', icon: LayoutDashboard, path: '/' },
     { title: 'Workflows', icon: Workflow, path: '/workflows' },
-    { title: 'Executions', icon: PlayCircle, path: '/executions' },
+    { title: 'Audit Log', icon: PlayCircle, path: '/executions' },
     { title: 'Notifications', icon: Bell, path: '/notifications' },
     { title: 'Settings', icon: Settings, path: '/settings' },
   ];

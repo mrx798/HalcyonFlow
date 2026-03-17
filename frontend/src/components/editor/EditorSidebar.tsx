@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 interface EditorSidebarProps {
   selectedNode: Node<WorkflowNodeData> | null;
   nodes: Node<any>[];
+  backendSteps?: any[];
   workflowId: string;
   onClose: () => void;
   onUpdate: (id: string, data: any) => void;
@@ -17,6 +18,7 @@ interface EditorSidebarProps {
 const EditorSidebar: React.FC<EditorSidebarProps> = ({ 
   selectedNode, 
   nodes,
+  backendSteps,
   workflowId,
   onClose, 
   onUpdate,
@@ -111,7 +113,9 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
     const savedRuleIds = newRules.filter(r => r.id?.length > 15).map(r => r.id);
     if (savedRuleIds.length > 1 && selectedNode) {
       import('../../api/rule.api').then(({ ruleApi }) => {
-        ruleApi.validateCondition(workflowId, selectedNode.id, { ruleIds: savedRuleIds }).catch(() => {});
+        ruleApi.reorderRules(workflowId, selectedNode.id, { ruleIds: savedRuleIds }).catch(() => {
+          toast.error('Failed to save rule order');
+        });
       });
     }
   };
@@ -160,11 +164,24 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Routing Rules</label>
-            <button onClick={addRule} className="p-1 px-2 rounded-lg bg-cyan-600/10 text-cyan-500 hover:bg-cyan-600/20 transition-all text-[10px] font-bold flex items-center gap-1">
-              <Plus size={10} /> ADD RULE
-            </button>
+            {!isNewStep && (
+              <button onClick={addRule} className="p-1 px-2 rounded-lg bg-cyan-600/10 text-cyan-500 hover:bg-cyan-600/20 transition-all text-[10px] font-bold flex items-center gap-1">
+                <Plus size={10} /> ADD RULE
+              </button>
+            )}
           </div>
-          {isNewStep && <p className="text-xs text-amber-500">Save step first before adding rules.</p>}
+          
+          {isNewStep ? (
+            <div className="p-4 rounded-xl border border-dashed border-slate-700 bg-slate-900/50 flex flex-col items-center text-center gap-3">
+              <p className="text-xs text-slate-400">Save this step first to enable routing rules</p>
+              <button
+                onClick={() => onSave(selectedNode!.id, data)}
+                className="btn-primary text-xs py-1.5 px-4 flex items-center justify-center gap-2"
+              >
+                <Save size={14} /> Save Step
+              </button>
+            </div>
+          ) : (
           <div className="space-y-3">
             {rules.map((rule, idx) => (
               <div key={rule.id} className={`p-4 rounded-xl border space-y-3 ${rule.isDefault ? 'bg-slate-900/50 border-slate-700/50 border-dashed' : 'bg-slate-900/50 border-slate-700'}`}>
@@ -220,9 +237,17 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
                   >
                     <option value="">Select a step</option>
                     <option value="__end__">🏁 End Workflow</option>
-                    {nodes.filter(n => n.id !== selectedNode.id).map(n => (
-                      <option key={n.id} value={n.id}>{n.data?.label || 'Unnamed Step'}</option>
-                    ))}
+                    {nodes
+                      .filter(n => n.id !== selectedNode?.id)
+                      .map(n => {
+                        const label = n.data?.label || n.data?.name || "Unnamed Step";
+                        const isDraft = n.data?.isNew;
+                        return (
+                          <option key={n.id} value={n.id}>
+                            {label} {isDraft ? '(Draft)' : ''}
+                          </option>
+                        );
+                      })}
                   </select>
                 </div>
                 <button
@@ -234,6 +259,7 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
               </div>
             ))}
           </div>
+          )}
         </div>
       </div>
 

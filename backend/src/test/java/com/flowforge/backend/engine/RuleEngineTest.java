@@ -259,4 +259,42 @@ class RuleEngineTest {
         Map<String, Object> data3 = Map.of("amount", 50, "country", "US", "priority", "Low");
         assertFalse(ruleEngine.evaluate(List.of(rule), data3).matched());
     }
+
+    @Test
+    void testUserCase7_DefaultSelected() {
+        // Test 7: Rule selection — first rule false, DEFAULT selected
+        // rules: [
+        //   {priority: 1, condition: "amount > 100", nextStepId: "step-A"},
+        //   {priority: 99, condition: "DEFAULT", nextStepId: "step-B"}
+        // ]
+        // input: {amount: 20}
+        // expected selected nextStepId: "step-B"
+        Rule r1 = createRule("amount > 100", 1);
+        Rule defaultRule = createRule("DEFAULT", 99, true); 
+        Map<String, Object> data = Map.of("amount", 20);
+        RuleEngine.RuleEvaluationResult result = ruleEngine.evaluate(List.of(r1, defaultRule), data);
+        
+        assertTrue(result.matched());
+        assertEquals(defaultRule.getId(), result.matchedRule().getId());
+        assertEquals(defaultRule.getNextStepId(), result.nextStepId());
+    }
+
+    @Test
+    void testUserCase8_FirstRuleSelected() {
+        // Test 8: Rule selection — first rule true, selected
+        // rules: [
+        //   {priority: 1, condition: "amount > 100", nextStepId: "step-A"},
+        //   {priority: 99, condition: "DEFAULT", nextStepId: "step-B"}
+        // ]
+        // input: {amount: 250}
+        // expected selected nextStepId: "step-A"
+        Rule r1 = createRule("amount > 100", 1);
+        Rule defaultRule = createRule("DEFAULT", 99, true);
+        Map<String, Object> data = Map.of("amount", 250);
+        RuleEngine.RuleEvaluationResult result = ruleEngine.evaluate(List.of(r1, defaultRule), data);
+        
+        assertTrue(result.matched());
+        assertEquals(r1.getId(), result.matchedRule().getId());
+        assertEquals(r1.getNextStepId(), result.nextStepId());
+    }
 }

@@ -77,12 +77,14 @@ const AuditLogPage: React.FC = () => {
           <table className="w-full text-left">
             <thead>
               <tr className="bg-slate-900/50 text-[10px] uppercase tracking-widest text-slate-500 font-bold border-b border-slate-700/30">
+                <th className="px-8 py-4">Execution ID</th>
                 <th className="px-8 py-4">Workflow</th>
+                <th className="px-8 py-4 text-center">Version</th>
                 <th className="px-8 py-4">Status</th>
-                <th className="px-8 py-4">Triggered By</th>
-                <th className="px-8 py-4">Duration</th>
-                <th className="px-8 py-4">Timeline</th>
-                <th className="px-8 py-4 text-right">Action</th>
+                <th className="px-8 py-4">Started By</th>
+                <th className="px-8 py-4">Start Time</th>
+                <th className="px-8 py-4">End Time</th>
+                <th className="px-8 py-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-700/30 text-sm">
@@ -95,8 +97,15 @@ const AuditLogPage: React.FC = () => {
               ) : filtered.map((ex: any) => (
                 <tr key={ex.id} className="hover:bg-slate-800/30 transition-colors group">
                   <td className="px-8 py-5">
+                    <p className="text-[10px] text-slate-500 font-mono">{ex.id}</p>
+                  </td>
+                  <td className="px-8 py-5">
                     <p className="font-bold text-slate-200 group-hover:text-cyan-400 transition-colors">{ex.workflowName}</p>
-                    <p className="text-[10px] text-slate-500 mt-1 font-mono">{ex.id}</p>
+                  </td>
+                  <td className="px-8 py-5 text-center">
+                    <span className="px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 text-[10px] font-bold">
+                       v{ex.workflowVersion || 1}
+                    </span>
                   </td>
                   <td className="px-8 py-5">
                     <div className="flex items-center gap-2">
@@ -105,21 +114,20 @@ const AuditLogPage: React.FC = () => {
                     </div>
                   </td>
                   <td className="px-8 py-5 text-slate-400 text-xs">
-                    {ex.triggeredBy || 'System'}
-                  </td>
-                  <td className="px-8 py-5 text-slate-400 text-xs">
-                    {ex.duration ? `${ex.duration}ms` : '--'}
+                    {ex.triggeredByName || ex.triggeredBy || 'System'}
                   </td>
                   <td className="px-8 py-5">
-                    <p className="text-xs text-slate-300">{new Date(ex.startedAt).toLocaleDateString()}</p>
-                    <p className="text-[10px] text-slate-500 mt-0.5">{new Date(ex.startedAt).toLocaleTimeString()}</p>
+                    <p className="text-xs text-slate-300">{new Date(ex.startedAt).toLocaleString()}</p>
+                  </td>
+                  <td className="px-8 py-5">
+                    <p className="text-xs text-slate-400">{ex.endedAt ? new Date(ex.endedAt).toLocaleString() : '--'}</p>
                   </td>
                   <td className="px-8 py-5 text-right">
                     <Link 
                       to={`/executions/${ex.id}`}
-                      className="inline-flex items-center gap-1.5 text-xs font-bold text-cyan-500 hover:text-cyan-400 transition-colors"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-cyan-600/10 text-xs font-bold text-cyan-500 hover:bg-cyan-600/20 transition-colors"
                     >
-                      DETAILS <ArrowRight size={14} />
+                      View Logs <ArrowRight size={14} />
                     </Link>
                   </td>
                 </tr>

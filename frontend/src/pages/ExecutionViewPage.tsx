@@ -1,326 +1,194 @@
-import React, { useState, useEffect } from 'react';
-import ReactFlow, { 
-  Background, 
-  Controls, 
-  Node, 
-  Edge,
-  ProOptions
-} from 'reactflow';
-import 'reactflow/dist/style.css';
-import { useParams, Link } from 'react-router-dom';
+import React from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { executionApi } from '../api/execution.api';
-import { ApiResponse } from '../types/auth';
-import { Execution } from '../types/execution';
-import StepNode from '../components/editor/StepNode';
-import { 
-  ChevronLeft, 
-  Clock, 
-  Terminal,
-  MousePointer2,
-  Check,
-  X
-} from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import api from '../api/axios';
 import { toast } from 'sonner';
+import { ChevronLeft } from 'lucide-react';
 
-const nodeTypes = {
-  step: StepNode,
+const calcDuration = (startedAt: string, endedAt: string) => {
+  if (!startedAt || !endedAt) return '00:00:00';
+  const diff = new Date(endedAt).getTime() - new Date(startedAt).getTime();
+  if (diff < 0 || isNaN(diff)) return '00:00:00';
+  const secs = Math.floor(diff / 1000);
+  const h = Math.floor(secs / 3600).toString().padStart(2, '0');
+  const m = Math.floor((secs % 3600) / 60).toString().padStart(2, '0');
+  const s = (secs % 60).toString().padStart(2, '0');
+  return `${h}:${m}:${s}`;
 };
 
-const proOptions: ProOptions = { hideAttribution: true };
-
 const ExecutionViewPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
-  const [nodes, setNodes] = useState<Node[]>([]);
-  const [edges, setEdges] = useState<Edge[]>([]);
+  const { id } = useParams<{ id: string }>(); // executionId
+  const navigate = useNavigate();
 
-  const { data: execution, isLoading, refetch } = useQuery({
+  const { data: execution, isLoading: execLoading, refetch: refetchExec } = useQuery({
     queryKey: ['execution', id],
     queryFn: async () => {
-      const response = await executionApi.getExecution(id!);
-      return response.data.data;
+      const r = await executionApi.getExecution(id!);
+      return r.data.data;
     },
-    refetchInterval: (query) => 
-      query.state.data?.status === 'RUNNING' || query.state.data?.status === 'PAUSED' ? 2000 : false,
+    refetchInterval: (query) => {
+      const s = query.state.data?.status;
+      return (s === 'IN_PROGRESS' || s === 'PAUSED') ? 3000 : false;
+    },
   });
 
-  useEffect(() => {
-    if (execution) {
-      // Logic to transform workflow steps into nodes would go here
-      // For now, mock based on execution status
-      setNodes([
-        {
-          id: '1',
-          type: 'step',
-          position: { x: 250, y: 50 },
-          data: { 
-            label: 'Start Workflow', 
-            type: 'TASK', 
-            onEdit: () => {} 
-          },
-          selected: execution.currentStepId === '1'
-        },
-        {
-          id: '2',
-          type: 'step',
-          position: { x: 250, y: 200 },
-          data: { 
-            label: 'User Approval', 
-            type: 'APPROVAL', 
-            onEdit: () => {} 
-          },
-          selected: execution.status === 'PAUSED'
-        },
-      ]);
-      setEdges([
-        { id: 'e1-2', source: '1', target: '2', animated: execution.status === 'RUNNING', style: { stroke: execution.status === 'RUNNING' ? '#06b6d4' : '#334155' } },
-      ]);
-    }
-  }, [execution]);
+  const { data: workflow } = useQuery({
+    queryKey: ['workflow', execution?.workflowId],
+    queryFn: async () => {
+      const r = await api.get(`/workflows/${execution!.workflowId}`);
+      return r.data.data;
+    },
+    enabled: !!execution?.workflowId,
+  });
 
   const handleApproval = async (approve: boolean) => {
     try {
-      await executionApi.resumeExecution(id!, {
-        approved: approve,
-        comment: approve ? 'Approved via Dashboard' : 'Rejected via Dashboard'
-      });
-      toast.success(approve ? 'Step approved' : 'Step rejected');
-      refetch();
-    } catch (error: any) {
-      toast.error('Action failed');
-    }
+      await executionApi.resumeExecution(id!, { approved: approve, comment: approve ? 'Approved' : 'Rejected' });
+      refetchExec();
+    } catch { toast.error('Approval failed'); }
   };
 
-  if (isLoading) return <div className="p-8">Loading execution details...</div>;
+  if (execLoading) return <div className="p-10 text-slate-400 font-mono">Loading execution...</div>;
+  if (!execution) return <div className="p-10 text-slate-400 font-mono">Execution not found.</div>;
 
-  const getStatusColor = () => {
-    switch (execution?.status) {
-      case 'COMPLETED': return 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20';
-      case 'FAILED': return 'text-red-500 bg-red-500/10 border-red-500/20';
-      case 'PAUSED': return 'text-amber-500 bg-amber-500/10 border-amber-500/20';
-      default: return 'text-cyan-500 bg-cyan-500/10 border-cyan-500/20';
-    }
+  const isCompleted = execution.status === 'COMPLETED';
+  const isFailed = execution.status === 'FAILED';
+  const isPaused = execution.status === 'PAUSED';
+  const isDone = isCompleted || isFailed;
+  const currentStepId = execution.currentStepId;
+  const logs = execution.logs || [];
+
+  /* ━━━━━━━━━━━━━━━━━━━━ STAGE 2: PROGRESS VIEW ━━━━━━━━━━━━━━━━━━━━ */
+  const renderProgress = () => {
+    return (
+      <div className="max-w-xl border border-white/20 p-6 font-mono text-sm space-y-6 shadow-2xl bg-[#0a0f1c]">
+        <div className="border-b border-white/20 pb-4">
+          <h2 className="text-white font-bold text-base">Execution Progress</h2>
+          <div className="flex items-center gap-2 mt-1">
+            <p className="text-slate-300">{workflow?.name || execution.workflowName}</p>
+            <span className="bg-yellow-500/20 text-yellow-500 px-2 py-0.5 rounded text-xs">[{execution.status} 🟡]</span>
+          </div>
+        </div>
+
+        <div>
+           <p className="text-slate-300 mb-1">Current Step: <span className="text-white font-bold">{currentStepId ? workflow?.steps?.find((s:any) => s.id === currentStepId)?.name || 'Unknown' : '—'}</span></p>
+           <p className="text-slate-300">Status: <span className="text-cyan-400">{isPaused ? 'Waiting for approval' : 'Running...'}</span></p>
+        </div>
+
+        <div className="border border-white/20 p-4 space-y-2 bg-slate-900/50">
+          {(workflow?.steps || []).map((step: any, idx: number) => {
+            const isCurrent = step.id === currentStepId;
+            const logEntry = logs.find((l:any) => l.step_name === step.name || l.stepName === step.name);
+            const isStepDone = logEntry?.status === 'COMPLETED';
+            const isStepFail = logEntry?.status === 'FAILED';
+
+            return (
+              <div key={step.id} className="flex items-center justify-between">
+                <span className={isCurrent ? 'text-yellow-400 font-bold' : isStepDone ? 'text-slate-300' : 'text-slate-500'}>
+                  Step {idx + 1}: {step.name}
+                </span>
+                <span className="text-xs shrink-0">
+                  {isCurrent ? <span className="text-yellow-400 animate-pulse">⏳ IN PROGRESS</span> :
+                   isStepDone ? <span className="text-emerald-500">✅ COMPLETED</span> :
+                   isStepFail ? <span className="text-red-500">❌ FAILED</span> :
+                   <span className="text-slate-600">○ PENDING</span>}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
+        {isPaused && (
+          <div className="border border-amber-500/30 bg-amber-500/5 p-4 mt-6">
+            <p className="text-amber-500 font-bold mb-2">⚠️ Action Required</p>
+            <p className="text-slate-300 mb-4">Step "{workflow?.steps?.find((s:any) => s.id === currentStepId)?.name}" needs your approval</p>
+            <div className="flex gap-4">
+              <button onClick={() => handleApproval(true)} className="border border-emerald-500/50 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 px-4 py-1.5 rounded transition-colors text-xs font-bold">
+                [ ✓ Approve ]
+              </button>
+              <button onClick={() => handleApproval(false)} className="border border-red-500/50 bg-red-500/10 hover:bg-red-500/20 text-red-400 px-4 py-1.5 rounded transition-colors text-xs font-bold">
+                [ ✗ Reject ]
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
   };
 
-  const formatDate = (dateString: string | undefined) => {
-    if (!dateString) return 'Just started';
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return 'Just started';
-    return date.toLocaleString();
+  /* ━━━━━━━━━━━━━━━━━━━━ STAGE 3: EXECUTION LOGS ━━━━━━━━━━━━━━━━━━━━ */
+  const renderLogs = () => {
+    return (
+      <div className="max-w-2xl border border-white/20 p-6 font-mono text-sm space-y-6 shadow-2xl bg-[#0a0f1c] mb-10">
+        <div className="border-b border-white/20 pb-4">
+          <h2 className="text-white font-bold text-base">Execution Logs</h2>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-1">
+            <span className="text-slate-300">{workflow?.name || execution.workflowName}</span>
+            <span className={`px-2 py-0.5 rounded text-xs ${isCompleted ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`}>
+              [{execution.status} {isCompleted ? '✅' : '❌'}]
+            </span>
+            <span className="text-slate-500 text-xs">Started: {new Date(execution.startedAt).toLocaleTimeString()}</span>
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          {logs.map((log: any, idx: number) => {
+            const rules = log.evaluatedRules || log.evaluated_rules || [];
+            return (
+              <div key={idx} className="space-y-2">
+                <h3 className="text-white font-bold">[Step {idx + 1}] {log.stepName || log.step_name}</h3>
+                
+                {rules.length > 0 && (
+                  <div>
+                    <p className="text-slate-400">Rules evaluated:</p>
+                    <div className="pl-4 space-y-1 mt-1">
+                      {rules.map((r: any, ri: number) => {
+                        const ruleText = r.rule || r.condition;
+                        const v = Boolean(r.result);
+                        return (
+                          <div key={ri} className={v ? 'text-emerald-300' : 'text-slate-500'}>
+                            {v ? '✅' : '❌'} {ruleText} → {v ? 'true' : 'false'}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                <div className="text-slate-300">
+                  <p>Next Step: <span className="text-white">{log.selectedNextStep || log.selected_next_step || 'End Workflow'}</span></p>
+                  <p>Status: {log.status}</p>
+                  {(log.approverId || log.approver_id || log.approverName) && (
+                    <p>Approver: {(log.approverId || log.approver_id || log.approverName)}</p>
+                  )}
+                  <p>Duration: {calcDuration(log.startedAt || log.started_at, log.endedAt || log.ended_at)}</p>
+                </div>
+
+                {idx < logs.length - 1 && <hr className="border-white/10 mt-6" />}
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="pt-6 border-t border-white/20 flex justify-center mt-8">
+          <button onClick={() => navigate('/executions')} className="border border-white/20 bg-white/5 hover:bg-white/10 text-white px-6 py-2 rounded transition-colors">
+            Back to Audit Logs
+          </button>
+        </div>
+      </div>
+    );
   };
 
   return (
-    <div className="flex flex-col h-screen -m-8 relative overflow-hidden">
-      {/* Header */}
-      <div className="h-16 glass-card !rounded-none !border-t-0 !border-x-0 flex items-center justify-between px-6 z-10">
-        <div className="flex items-center gap-4">
-          <Link to="/executions" className="p-2 hover:bg-slate-800 rounded-lg transition-colors text-slate-400">
-            <ChevronLeft size={20} />
-          </Link>
-          <div className="h-6 w-px bg-slate-700" />
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-sm font-bold text-white uppercase tracking-wider">{execution?.workflowName}</h1>
-              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${getStatusColor()}`}>
-                {execution?.status}
-              </span>
-            </div>
-            <p className="text-[10px] text-slate-500 font-medium">ID: {execution?.id}</p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3 text-xs text-slate-400">
-          <div className="flex items-center gap-2 pr-4 border-r border-slate-800">
-            <Clock size={14} />
-            {formatDate(execution?.startedAt)}
-          </div>
-          <p className="pl-1">Duration: {execution?.duration ? execution.duration : '--'}</p>
-        </div>
+    <div className="min-h-screen py-10 px-4 flex flex-col items-center">
+      <div className="self-start mb-6 ml-4 sm:ml-10">
+         <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-sm font-mono">
+            <ChevronLeft size={16} /> Back
+         </button>
       </div>
 
-      <div className="flex-1 flex overflow-hidden">
-        {/* Canvas */}
-        <div className="flex-1 relative bg-slate-950">
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            nodeTypes={nodeTypes}
-            proOptions={proOptions}
-            fitView
-            nodesDraggable={false}
-            nodesConnectable={false}
-            elementsSelectable={false}
-          >
-            <Background color="#1e293b" gap={20} />
-            <Controls className="!bg-slate-800 !border-slate-700 !fill-slate-400 shadow-2xl" />
-          </ReactFlow>
-
-          {/* Action Overlay */}
-          <AnimatePresence>
-            {(execution?.status === 'PAUSED' || execution?.status === 'IN_PROGRESS') && (
-              <motion.div
-                initial={{ opacity: 0, y: 50 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 50 }}
-                className="absolute bottom-10 left-1/2 -translate-x-1/2 glass-card p-6 flex flex-col items-center gap-4 border border-amber-500/30 z-20 shadow-amber-900/20"
-              >
-                <div className="flex items-center gap-3 text-amber-500">
-                  <MousePointer2 className="w-5 h-5" />
-                  <p className="text-sm font-bold uppercase tracking-wider">Awaiting your approval</p>
-                </div>
-                <div className="flex items-center gap-4">
-                  <button 
-                    onClick={() => handleApproval(false)}
-                    className="flex items-center gap-2 px-6 py-2 rounded-xl bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500/20 transition-all font-bold text-sm"
-                  >
-                    <X size={18} /> REJECT
-                  </button>
-                  <button 
-                    onClick={() => handleApproval(true)}
-                    className="flex items-center gap-2 px-6 py-2 rounded-xl bg-emerald-500 text-white shadow-lg shadow-emerald-900/20 hover:bg-emerald-400 transition-all font-bold text-sm"
-                  >
-                    <Check size={18} /> APPROVE STEP
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        {/* Sidebar: Timeline & Data */}
-        <div className="w-96 glass border-l border-slate-700/50 h-full flex flex-col">
-          <div className="p-6 border-b border-slate-700/50">
-            <div className="flex items-center gap-2 text-cyan-500 mb-2">
-              <Terminal size={18} />
-              <h2 className="text-sm font-bold uppercase tracking-widest">Execution Timeline</h2>
-            </div>
-            <div className="flex items-center gap-3 text-[10px] text-slate-500">
-              <span>{execution?.logs?.length || 0} steps traced</span>
-              <span>·</span>
-              <span>{execution?.status}</span>
-            </div>
-          </div>
-          
-          <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
-            <div className="relative">
-              {/* Timeline connector line */}
-              <div className="absolute left-[15px] top-3 bottom-3 w-px bg-gradient-to-b from-cyan-500/40 via-slate-700/40 to-slate-800/20" />
-              
-              {execution?.logs?.map((log: any, i: number) => {
-                const isLast = i === (execution.logs?.length || 0) - 1;
-                const isCurrent = isLast && !['COMPLETED', 'FAILED', 'CANCELLED'].includes(execution.status);
-                const statusIcon = log.status === 'COMPLETED' ? '✓' : log.status === 'FAILED' ? '✗' : isCurrent ? '◉' : '○';
-                const statusColor = log.status === 'COMPLETED' ? 'bg-emerald-500 text-white border-emerald-400' 
-                  : log.status === 'FAILED' ? 'bg-red-500 text-white border-red-400' 
-                  : isCurrent ? 'bg-amber-500 text-white border-amber-400' 
-                  : 'bg-slate-700 text-slate-300 border-slate-600';
-                
-                return (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.08 }}
-                    className="relative pl-10 pb-6 last:pb-0"
-                  >
-                    {/* Timeline dot */}
-                    <div className={`absolute left-[7px] top-1 w-[18px] h-[18px] rounded-full border-2 flex items-center justify-center text-[9px] font-bold z-10 ${statusColor}`}>
-                      {statusIcon}
-                    </div>
-                    {isCurrent && (
-                      <div className="absolute left-[3px] top-[-3px] w-[26px] h-[26px] rounded-full border border-amber-500/40 animate-ping" />
-                    )}
-
-                    {/* Step card */}
-                    <div className={`rounded-xl border p-3 space-y-2 ${isCurrent ? 'bg-amber-500/5 border-amber-500/20' : 'bg-slate-900/50 border-slate-800/50'}`}>
-                      {/* Header */}
-                      <div className="flex items-center justify-between">
-                        <span className={`text-xs font-bold ${
-                          log.status === 'COMPLETED' ? 'text-emerald-400' :
-                          log.status === 'FAILED' ? 'text-red-400' :
-                          isCurrent ? 'text-amber-400' : 'text-slate-300'
-                        }`}>
-                          {log.stepName || 'SYSTEM'}
-                        </span>
-                        <span className="text-[9px] text-slate-600 font-mono">{formatDate(log.timestamp)}</span>
-                      </div>
-
-                      {/* Action */}
-                      <p className="text-[11px] text-slate-400">
-                        {log.action || (log.status ? `Step ${log.status.toLowerCase()}` : 'Processing...')}
-                      </p>
-                      {log.details && <p className="text-[10px] text-slate-500 border-l-2 border-slate-800 pl-2">{log.details}</p>}
-                      
-                      {/* Evaluated Rules */}
-                      {log.evaluatedRules && log.evaluatedRules.length > 0 && (
-                        <div className="mt-1 pt-2 border-t border-slate-800/50">
-                          <p className="text-[9px] text-slate-500 mb-1.5 uppercase font-bold tracking-wider">Rules Evaluated</p>
-                          <div className="space-y-1">
-                            {log.evaluatedRules.map((rule: any, idx: number) => (
-                              <div key={idx} className={`flex items-center gap-2 px-2 py-1 rounded-lg text-[10px] ${
-                                rule.result ? 'bg-emerald-500/10 border border-emerald-500/10' : 'bg-slate-800/30'
-                              }`}>
-                                <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold ${
-                                  rule.result ? 'bg-emerald-500 text-white' : 'bg-slate-700 text-slate-500'
-                                }`}>
-                                  {rule.result ? '✓' : '✗'}
-                                </span>
-                                <span className={rule.result ? 'text-emerald-300 font-medium' : 'text-slate-500'}>{rule.condition}</span>
-                                <span className={`ml-auto font-bold ${rule.result ? 'text-emerald-400' : 'text-slate-600'}`}>
-                                  {rule.result ? 'TRUE' : 'FALSE'}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Next Step */}
-                      {log.selectedNextStep && (
-                        <div className="flex items-center gap-2 mt-1 px-2 py-1 rounded-lg bg-cyan-500/5 border border-cyan-500/10">
-                          <span className="text-cyan-500 text-[10px]">↪</span>
-                          <span className="text-[10px] text-cyan-400 font-medium">Next: {log.selectedNextStep}</span>
-                        </div>
-                      )}
-
-                      {/* Duration */}
-                      {log.started_at && log.ended_at && (
-                        <div className="flex items-center gap-1 text-[9px] text-slate-600">
-                          <Clock size={8} />
-                          {Math.round((new Date(log.ended_at).getTime() - new Date(log.started_at).getTime()) / 1000)}s
-                        </div>
-                      )}
-                    </div>
-                  </motion.div>
-                );
-              })}
-              {(!execution?.logs || execution.logs.length === 0) && (
-                <div className="text-center py-12">
-                  <Terminal className="w-8 h-8 text-slate-700 mx-auto mb-2" />
-                  <p className="text-slate-600 text-xs italic">No activity recorded yet.</p>
-                  <p className="text-slate-700 text-[10px] mt-1">Steps will appear here as they execute.</p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="p-6 border-t border-slate-700/50 bg-slate-900/30">
-            <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4">Context Data</h3>
-            <div className="space-y-2">
-              {Object.entries(execution?.inputData || {}).map(([key, val]: any) => (
-                <div key={key} className="flex justify-between text-[11px]">
-                  <span className="text-slate-400">{key}:</span>
-                  <span className="text-slate-200 font-mono italic">{JSON.stringify(val)}</span>
-                </div>
-              ))}
-              {Object.keys(execution?.inputData || {}).length === 0 && (
-                <p className="text-slate-600 text-[10px] italic">No variables defined.</p>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
+      {!isDone ? renderProgress() : renderLogs()}
     </div>
   );
 };

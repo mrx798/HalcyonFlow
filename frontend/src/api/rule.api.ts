@@ -11,4 +11,6 @@ export const ruleApi = {
     api.delete(`/workflows/${workflowId}/steps/${stepId}/rules/${ruleId}`),
   validateCondition: (workflowId: string, stepId: string, data: any) =>
     api.post(`/workflows/${workflowId}/steps/${stepId}/rules/validate`, data),
+  reorderRules: (workflowId: string, stepId: string, data: { ruleIds: string[] }) =>
+    api.put(`/workflows/${workflowId}/steps/${stepId}/rules/reorder`, data),
 };

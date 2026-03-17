@@ -6,7 +6,7 @@ import api from '../../api/axios';
 
 interface SchemaField {
   name: string;
-  type: 'string' | 'number' | 'boolean';
+  type: 'string' | 'number' | 'boolean' | 'date';
   required: boolean;
   allowed_values?: string[];
 }
@@ -106,6 +106,7 @@ const InputSchemaEditor: React.FC<InputSchemaEditorProps> = ({ workflow, onClose
     string: 'text-cyan-400 bg-cyan-400/10 border-cyan-400/20',
     number: 'text-purple-400 bg-purple-400/10 border-purple-400/20',
     boolean: 'text-amber-400 bg-amber-400/10 border-amber-400/20',
+    date: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20',
   };
 
   return (
@@ -178,6 +179,7 @@ const InputSchemaEditor: React.FC<InputSchemaEditorProps> = ({ workflow, onClose
                     <option value="string">STRING</option>
                     <option value="number">NUMBER</option>
                     <option value="boolean">BOOLEAN</option>
+                    <option value="date">DATE</option>
                   </select>
 
                   {/* Required toggle */}

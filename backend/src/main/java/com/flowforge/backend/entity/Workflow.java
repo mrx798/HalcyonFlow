@@ -64,6 +64,10 @@ public class Workflow {
     @Builder.Default
     private Boolean isActive = false;
 
+    @Column(name = "max_iterations", nullable = false)
+    @Builder.Default
+    private Integer maxIterations = 50;
+
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "input_schema", nullable = false)
     @Builder.Default

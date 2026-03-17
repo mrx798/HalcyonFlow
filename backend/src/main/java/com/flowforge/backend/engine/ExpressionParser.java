@@ -14,7 +14,6 @@ import java.util.regex.Pattern;
 public class ExpressionParser {
 
     private static final Logger log = LoggerFactory.getLogger(ExpressionParser.class);
-
     private static final Pattern FUNCTION_PATTERN =
             Pattern.compile("(contains|startsWith|endsWith)\\s*\\(\\s*([a-zA-Z_][a-zA-Z0-9_.]*)\\s*,\\s*[\"']([^\"']*)[\"']\\s*\\)");
 
@@ -40,7 +39,7 @@ public class ExpressionParser {
         try {
             return evaluateExpression(trimmed, data);
         } catch (Exception e) {
-            log.warn("Failed to evaluate condition '{}': {}", condition, e.getMessage());
+            log.error("Rule evaluation failed for condition '{}': {}", condition, e.getMessage());
             return false;
         }
     }
@@ -48,28 +47,30 @@ public class ExpressionParser {
     private boolean evaluateExpression(String expr, Map<String, Object> data) {
         expr = expr.trim();
 
-        // Remove outermost matching parentheses
+        // Handle outermost matching parentheses
         while (expr.startsWith("(") && findMatchingParen(expr, 0) == expr.length() - 1) {
             expr = expr.substring(1, expr.length() - 1).trim();
         }
 
-        // Handle OR (||) — lowest precedence, split at top-level only
+        // 1. Handle OR (||) — lowest precedence
         int orIndex = findTopLevelOperator(expr, "||");
         if (orIndex >= 0) {
             String left = expr.substring(0, orIndex).trim();
             String right = expr.substring(orIndex + 2).trim();
+            // Short-circuit: if left is true, return true
             return evaluateExpression(left, data) || evaluateExpression(right, data);
         }
 
-        // Handle AND (&&)
+        // 2. Handle AND (&&)
         int andIndex = findTopLevelOperator(expr, "&&");
         if (andIndex >= 0) {
             String left = expr.substring(0, andIndex).trim();
             String right = expr.substring(andIndex + 2).trim();
+            // Short-circuit: if left is false, return false
             return evaluateExpression(left, data) && evaluateExpression(right, data);
         }
 
-        // Handle function calls: contains(), startsWith(), endsWith()
+        // 3. Handle function calls: contains(), startsWith(), endsWith()
         Matcher funcMatcher = FUNCTION_PATTERN.matcher(expr);
         if (funcMatcher.matches()) {
             String funcName = funcMatcher.group(1);
@@ -78,7 +79,7 @@ public class ExpressionParser {
             return evaluateFunction(funcName, fieldName, value, data);
         }
 
-        // Handle comparison operators
+        // 4. Handle comparison operators
         return evaluateComparison(expr, data);
     }
 
@@ -106,26 +107,21 @@ public class ExpressionParser {
     }
 
     private int findComparisonOperator(String expr, String op) {
-        // Find operator that's not inside quotes
-        boolean inSingleQuote = false;
-        boolean inDoubleQuote = false;
+        boolean inQuote = false;
         int parenDepth = 0;
 
         for (int i = 0; i <= expr.length() - op.length(); i++) {
             char c = expr.charAt(i);
-            if (c == '\'' && !inDoubleQuote) inSingleQuote = !inSingleQuote;
-            else if (c == '"' && !inSingleQuote) inDoubleQuote = !inDoubleQuote;
-            else if (c == '(' && !inSingleQuote && !inDoubleQuote) parenDepth++;
-            else if (c == ')' && !inSingleQuote && !inDoubleQuote) parenDepth--;
+            if (c == '\'' || c == '"') inQuote = !inQuote;
+            else if (c == '(' && !inQuote) parenDepth++;
+            else if (c == ')' && !inQuote) parenDepth--;
 
-            if (!inSingleQuote && !inDoubleQuote && parenDepth == 0) {
+            if (!inQuote && parenDepth == 0) {
                 if (expr.startsWith(op, i)) {
-                    // For < and >, make sure it's not part of <= or >= or !=
+                    // Avoid partial matches (e.g., '>' matching '>=')
                     if (op.length() == 1) {
                         if (i + 1 < expr.length() && expr.charAt(i + 1) == '=') continue;
-                        if (op.equals("<") && i > 0 && expr.charAt(i - 1) == '<') continue;
-                        if (op.equals(">") && i > 0 && expr.charAt(i - 1) == '>') continue;
-                        if (i > 0 && expr.charAt(i - 1) == '!') continue;
+                        if (i > 0 && (expr.charAt(i - 1) == '<' || expr.charAt(i - 1) == '>' || expr.charAt(i - 1) == '!')) continue;
                     }
                     return i;
                 }
@@ -220,18 +216,16 @@ public class ExpressionParser {
     }
 
     private int findTopLevelOperator(String expr, String op) {
-        boolean inSingleQuote = false;
-        boolean inDoubleQuote = false;
+        boolean inQuote = false;
         int parenDepth = 0;
 
         for (int i = 0; i <= expr.length() - op.length(); i++) {
             char c = expr.charAt(i);
-            if (c == '\'' && !inDoubleQuote) inSingleQuote = !inSingleQuote;
-            else if (c == '"' && !inSingleQuote) inDoubleQuote = !inDoubleQuote;
-            else if (c == '(' && !inSingleQuote && !inDoubleQuote) parenDepth++;
-            else if (c == ')' && !inSingleQuote && !inDoubleQuote) parenDepth--;
+            if (c == '\'' || c == '"') inQuote = !inQuote;
+            else if (c == '(' && !inQuote) parenDepth++;
+            else if (c == ')' && !inQuote) parenDepth--;
 
-            if (!inSingleQuote && !inDoubleQuote && parenDepth == 0 && expr.startsWith(op, i)) {
+            if (!inQuote && parenDepth == 0 && expr.startsWith(op, i)) {
                 return i;
             }
         }
@@ -240,14 +234,12 @@ public class ExpressionParser {
 
     private int findMatchingParen(String expr, int openIndex) {
         int depth = 0;
-        boolean inSingleQuote = false;
-        boolean inDoubleQuote = false;
+        boolean inQuote = false;
         for (int i = openIndex; i < expr.length(); i++) {
             char c = expr.charAt(i);
-            if (c == '\'' && !inDoubleQuote) inSingleQuote = !inSingleQuote;
-            else if (c == '"' && !inSingleQuote) inDoubleQuote = !inDoubleQuote;
-            else if (c == '(' && !inSingleQuote && !inDoubleQuote) depth++;
-            else if (c == ')' && !inSingleQuote && !inDoubleQuote) {
+            if (c == '\'' || c == '"') inQuote = !inQuote;
+            else if (c == '(' && !inQuote) depth++;
+            else if (c == ')' && !inQuote) {
                 depth--;
                 if (depth == 0) return i;
             }

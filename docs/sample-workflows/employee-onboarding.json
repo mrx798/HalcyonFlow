@@ -1,0 +1,57 @@
+{
+  "name": "Employee Onboarding",
+  "description": "A workflow to handle new hire logistics including document upload and hardware request.",
+  "version": 1,
+  "status": "ACTIVE",
+  "inputSchema": {
+    "empName": { "type": "string", "required": true },
+    "empEmail": { "type": "string", "required": true },
+    "role": { "type": "string", "required": true },
+    "startDate": { "type": "date", "required": true }
+  },
+  "steps": [
+    {
+      "name": "Send Welcome Email",
+      "stepType": "NOTIFICATION",
+      "metadata": {
+        "template": "welcome_template",
+        "subject": "Welcome to the Team, ${empName}!"
+      },
+      "rules": [
+        { "condition": "DEFAULT", "nextStepName": "HR Document Review" }
+      ]
+    },
+    {
+      "name": "HR Document Review",
+      "stepType": "APPROVAL",
+      "metadata": {
+        "assignee": "hr@flowforge.com",
+        "instructions": "Please review the signed offer letter and ID proof."
+      },
+      "rules": [
+        { "condition": "approved == true", "nextStepName": "Hardware Provisioning" },
+        { "condition": "approved == false", "nextStepName": "Termination notification" }
+      ]
+    },
+    {
+      "name": "Hardware Provisioning",
+      "stepType": "TASK",
+      "metadata": {
+        "action": "create_ticket",
+        "system": "IT_ServiceNow",
+        "priority": "HIGH"
+      },
+      "rules": [
+        { "condition": "DEFAULT", "nextStepName": "Onboarding Complete" }
+      ]
+    },
+    {
+      "name": "Onboarding Complete",
+      "stepType": "NOTIFICATION",
+      "metadata": {
+        "message": "Onboarding for ${empName} has been successfully completed."
+      },
+      "rules": []
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+ALTER TABLE workflows ADD COLUMN max_iterations INTEGER NOT NULL DEFAULT 50;

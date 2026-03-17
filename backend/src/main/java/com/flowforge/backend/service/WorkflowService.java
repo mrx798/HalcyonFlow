@@ -12,10 +12,14 @@ import com.flowforge.backend.repository.WorkflowRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -42,14 +46,20 @@ public class WorkflowService {
     }
 
     @Transactional(readOnly = true)
-    public List<WorkflowResponse> getWorkflows(String userEmail) {
+    public Page<WorkflowResponse> getWorkflows(String userEmail, int page, int size, String search) {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "email", userEmail));
 
-        return workflowRepository.findAllByCreatedByIdOrderByCreatedAtDesc(user.getId())
-                .stream()
-                .map(workflowMapper::toResponse)
-                .collect(Collectors.toList());
+        Pageable pageable = PageRequest.of(page, size);
+
+        Page<Workflow> workflowsPage;
+        if (search != null && !search.isBlank()) {
+            workflowsPage = workflowRepository.findAllByCreatedByIdAndNameContainingIgnoreCaseOrderByCreatedAtDesc(user.getId(), search, pageable);
+        } else {
+            workflowsPage = workflowRepository.findAllByCreatedByIdOrderByCreatedAtDesc(user.getId(), pageable);
+        }
+
+        return workflowsPage.map(workflowMapper::toResponse);
     }
 
     @Transactional(readOnly = true)
