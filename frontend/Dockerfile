@@ -1,5 +1,5 @@
 # Stage 1 — Build
-FROM node:20-alpine AS build
+FROM node:20-slim AS build
 
 WORKDIR /app
 
@@ -10,8 +10,8 @@ ENV VITE_API_URL=$VITE_API_URL
 # Copy package files first for dependency caching
 COPY package*.json .
 
-# Install dependencies
-RUN npm install --silent --no-audit && npm cache clean --force
+# Install dependencies (no silent to see errors)
+RUN npm install --no-audit && npm cache clean --force
 
 # Copy source code
 COPY . .
