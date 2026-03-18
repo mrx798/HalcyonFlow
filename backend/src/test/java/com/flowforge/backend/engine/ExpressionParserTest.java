@@ -130,7 +130,7 @@ class ExpressionParserTest {
 
     @Test
     void testUserCase9_InvalidConditionFalse() {
-        // Test 9: Invalid condition — treated as false
+        // Test 9: Invalid condition â€” treated as false
         // condition: "invalidField >>> 100"
         // input: {amount: 250}
         // expected: false (no exception thrown to caller)
@@ -148,3 +148,4 @@ class ExpressionParserTest {
         assertTrue(parser.evaluate("amount > 100", data));
     }
 }
+

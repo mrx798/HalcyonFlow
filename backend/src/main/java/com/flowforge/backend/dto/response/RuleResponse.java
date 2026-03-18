@@ -26,3 +26,4 @@ public class RuleResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
+

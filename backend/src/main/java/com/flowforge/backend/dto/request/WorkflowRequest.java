@@ -27,3 +27,4 @@ public class WorkflowRequest {
     @NotNull(message = "Input schema is required")
     private Map<String, Object> inputSchema;
 }
+

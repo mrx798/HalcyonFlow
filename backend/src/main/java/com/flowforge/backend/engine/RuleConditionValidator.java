@@ -145,7 +145,7 @@ public final class RuleConditionValidator {
             // Should contain a comparison operator
             Matcher compMatcher = COMPARISON_OPERATOR_PATTERN.matcher(seg);
             if (!compMatcher.find()) {
-                // It could be a standalone boolean identifier — allow it
+                // It could be a standalone boolean identifier â€” allow it
                 if (IDENTIFIER_PATTERN.matcher(seg).matches()) {
                     continue;
                 }
@@ -195,3 +195,4 @@ public final class RuleConditionValidator {
     public record ValidationResult(boolean isValid, String errorMessage) {
     }
 }
+

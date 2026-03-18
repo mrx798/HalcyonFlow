@@ -3,36 +3,219 @@
 @tailwind utilities;
 
 @layer base {
-  body {
-    @apply bg-slate-900 text-slate-200 selection:bg-cyan-500/30;
+  :root {
+    /* Backgrounds — deep obsidian layers */
+    --bg-base: #080808;
+    --bg-surface: #0e0e0e;
+    --bg-elevated: #141414;
+    --bg-overlay: #1a1a1a;
+    --bg-hover: #1f1f1f;
+
+    /* Borders — barely visible depth */
+    --border-subtle: rgba(255, 255, 255, 0.06);
+    --border-default: rgba(255, 255, 255, 0.10);
+    --border-strong: rgba(255, 255, 255, 0.18);
+    --border-focus: rgba(251, 191, 36, 0.60);
+
+    /* Ember accent — warm amber gold */
+    --accent-primary: #f59e0b;
+    --accent-primary-hover: #d97706;
+    --accent-primary-muted: rgba(245, 158, 11, 0.15);
+    --accent-primary-border: rgba(245, 158, 11, 0.30);
+
+    /* Text — crisp hierarchy */
+    --text-primary: #fafafa;
+    --text-secondary: #a1a1a1;
+    --text-muted: #525252;
+    --text-disabled: #3a3a3a;
+
+    /* Semantic colors */
+    --success: #22c55e;
+    --success-muted: rgba(34, 197, 94, 0.12);
+    --success-border: rgba(34, 197, 94, 0.25);
+
+    --warning: #f59e0b;
+    --warning-muted: rgba(245, 158, 11, 0.12);
+    --warning-border: rgba(245, 158, 11, 0.25);
+
+    --error: #ef4444;
+    --error-muted: rgba(239, 68, 68, 0.12);
+    --error-border: rgba(239, 68, 68, 0.25);
+
+    --info: #8b5cf6;
+    --info-muted: rgba(139, 92, 246, 0.12);
+    --info-border: rgba(139, 92, 246, 0.25);
+
+    /* Step type colors */
+    --step-task: #8b5cf6;
+    --step-task-muted: rgba(139, 92, 246, 0.12);
+    --step-task-border: rgba(139, 92, 246, 0.25);
+
+    --step-approval: #f59e0b;
+    --step-approval-muted: rgba(245, 158, 11, 0.12);
+    --step-approval-border: rgba(245, 158, 11, 0.25);
+
+    --step-notification: #06b6d4;
+    --step-notification-muted: rgba(6, 182, 212, 0.12);
+    --step-notification-border: rgba(6, 182, 212, 0.25);
+
+    /* Radii */
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+    --radius-xl: 18px;
+    --radius-full: 9999px;
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.5);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.6);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.7);
+    --shadow-glow-amber: 0 0 20px rgba(245, 158, 11, 0.15);
+    --shadow-glow-success: 0 0 20px rgba(34, 197, 94, 0.15);
+    --shadow-glow-error: 0 0 20px rgba(239, 68, 68, 0.15);
+
+    /* Transitions */
+    --transition-fast: 100ms ease;
+    --transition-base: 150ms ease;
+    --transition-slow: 250ms ease;
   }
+
+  * {
+    font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  code, pre, .font-mono, [class*="mono"] {
+    font-family: 'Geist Mono', 'Fira Code', monospace;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: #080808;
+    color: var(--text-primary);
+  }
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* Selection */
+::selection {
+  background: var(--accent-primary-muted);
+  color: var(--text-primary);
+}
+
+/* Focus visible */
+:focus-visible {
+  outline: 1.5px solid var(--accent-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* Smooth page transitions */
+.page-enter {
+  opacity: 0;
+  transform: translateY(8px);
+}
+.page-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 200ms ease, transform 200ms ease;
+}
+
+/* Glow effects for status */
+.glow-success { box-shadow: var(--shadow-glow-success); }
+.glow-error { box-shadow: var(--shadow-glow-error); }
+.glow-amber { box-shadow: var(--shadow-glow-amber); }
+
+/* Pulse animation for live indicator */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.85); }
+}
+.pulse-dot {
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+/* Shimmer for loading skeletons */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-overlay) 25%,
+    var(--bg-hover) 50%,
+    var(--bg-overlay) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius-sm);
+}
+
+/* Fade in for content */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-in {
+  animation: fade-in 200ms ease forwards;
+}
+
+/* Slide in from right for panels */
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(16px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.slide-in-right {
+  animation: slide-in-right 200ms ease forwards;
+}
+
+/* Execution step pulse */
+@keyframes step-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(245, 158, 11, 0); }
+}
+.step-active-pulse {
+  animation: step-pulse 2s ease-in-out infinite;
 }
 
 @layer components {
-  .glass {
-    @apply bg-slate-800/50 backdrop-blur-xl border border-slate-700/50;
-  }
-  
   .glass-card {
-    @apply glass rounded-2xl shadow-2xl;
-  }
-  
-  .btn-primary {
-    @apply bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-2 px-4 rounded-xl transition-all duration-300 shadow-lg shadow-cyan-900/20 active:scale-95 disabled:opacity-50 disabled:active:scale-100;
+    @apply bg-[#0e0e0e] border border-white/[0.06] rounded-2xl shadow-lg backdrop-blur-md transition-all duration-300;
   }
 
   .input-field {
-    @apply bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-2 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all duration-300;
+    @apply w-full bg-[#080808] border border-white/[0.08] rounded-lg px-4 py-2.5 text-[#fafafa] placeholder-[#3a3a3a] outline-none transition-all duration-200 focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20 hover:border-white/[0.14] font-mono text-sm;
   }
-}
 
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-}
-::-webkit-scrollbar-track {
-  @apply bg-slate-900;
-}
-::-webkit-scrollbar-thumb {
-  @apply bg-slate-800 rounded-full border-2 border-slate-900 hover:bg-slate-700 transition-colors;
+  .btn-primary {
+    @apply bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-black font-bold py-2.5 px-6 rounded-lg transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest text-[10px];
+  }
+
+  .btn-secondary {
+    @apply border border-white/[0.10] bg-white/[0.02] hover:bg-white/[0.06] text-[#fafafa] font-bold py-2.5 px-6 rounded-lg transition-all duration-150 uppercase tracking-widest text-[10px];
+  }
+
+  .btn-ghost {
+    @apply text-[#a1a1a1] hover:text-[#fafafa] hover:bg-white/[0.04] font-bold py-2 px-4 rounded-lg transition-all duration-150 uppercase tracking-widest text-[10px];
+  }
 }

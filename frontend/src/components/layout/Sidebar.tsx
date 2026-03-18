@@ -6,19 +6,12 @@ import {
   Settings, 
   Bell, 
   LogOut,
-  ChevronLeft,
-  ChevronRight,
-  Workflow
+  Workflow,
+  Zap
 } from 'lucide-react';
-import { motion } from 'framer-motion';
 import { useAuthStore } from '../../store/useAuthStore';
 
-interface SidebarProps {
-  collapsed: boolean;
-  setCollapsed: (collapsed: boolean) => void;
-}
-
-const Sidebar: React.FC<SidebarProps> = ({ collapsed, setCollapsed }) => {
+const Sidebar: React.FC = () => {
   const { logout } = useAuthStore();
   const navigate = useNavigate();
 
@@ -31,62 +24,67 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, setCollapsed }) => {
     { title: 'Dashboard', icon: LayoutDashboard, path: '/' },
     { title: 'Workflows', icon: Workflow, path: '/workflows' },
     { title: 'Audit Log', icon: PlayCircle, path: '/executions' },
+  ];
+  
+  const bottomItems = [
     { title: 'Notifications', icon: Bell, path: '/notifications' },
     { title: 'Settings', icon: Settings, path: '/settings' },
   ];
 
   return (
-    <motion.aside
-      animate={{ width: collapsed ? 80 : 260 }}
-      className="glass border-r border-slate-700/50 flex flex-col h-screen sticky top-0"
-    >
-      <div className="p-6 flex items-center justify-between">
-        {!collapsed && (
-          <motion.h1 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent"
-          >
-            FlowForge
-          </motion.h1>
-        )}
-        <button 
-          onClick={() => setCollapsed(!collapsed)}
-          className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors"
-        >
-          {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
-        </button>
+    <aside className="bg-[#080808] border-r border-white/[0.06] w-52 fixed left-0 top-0 bottom-0 flex flex-col z-50">
+      
+      <div className="h-14 border-b border-white/[0.06] px-4 flex items-center gap-2">
+        <Zap className="text-amber-400 text-lg" size={20} fill="currentColor" />
+        <span className="text-[#fafafa] font-semibold text-base tracking-tight">HalcyonFlow</span>
       </div>
 
-      <nav className="flex-1 px-4 space-y-2 mt-4">
+      <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+        <div className="text-[#3a3a3a] text-[10px] uppercase tracking-widest px-3 mb-1">Menu</div>
         {navItems.map((item) => (
           <NavLink
             key={item.path}
             to={item.path}
             className={({ isActive }) => `
-              flex items-center gap-4 px-3 py-3 rounded-xl transition-all duration-300 group
               ${isActive 
-                ? 'bg-cyan-600/10 text-cyan-400 border border-cyan-500/20' 
-                : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'}
+                ? 'flex items-center gap-3 px-3 py-2 rounded-lg text-[#fafafa] bg-white/[0.06] text-sm font-medium' 
+                : 'flex items-center gap-3 px-3 py-2 rounded-lg text-[#525252] text-sm hover:text-[#a1a1a1] hover:bg-white/[0.04] transition-all duration-100 cursor-pointer'}
             `}
           >
-            <item.icon size={22} className="shrink-0" />
-            {!collapsed && <span className="font-medium">{item.title}</span>}
+            <item.icon size={16} className="shrink-0" />
+            <span>{item.title}</span>
           </NavLink>
         ))}
-      </nav>
+      </div>
 
-      <div className="p-4 border-t border-slate-800">
+      <div className="px-3 py-4 border-t border-white/[0.06] space-y-1">
+        <div className="text-[#3a3a3a] text-[10px] uppercase tracking-widest px-3 mb-1 mt-2">Personal</div>
+        {bottomItems.map((item) => (
+          <NavLink
+            key={item.path}
+            to={item.path}
+            className={({ isActive }) => `
+              ${isActive 
+                ? 'flex items-center gap-3 px-3 py-2 rounded-lg text-[#fafafa] bg-white/[0.06] text-sm font-medium' 
+                : 'flex items-center gap-3 px-3 py-2 rounded-lg text-[#525252] text-sm hover:text-[#a1a1a1] hover:bg-white/[0.04] transition-all duration-100 cursor-pointer'}
+            `}
+          >
+            <item.icon size={16} className="shrink-0" />
+            <span>{item.title}</span>
+          </NavLink>
+        ))}
+
         <button 
           onClick={handleLogout}
-          className="w-full flex items-center gap-3 p-3 rounded-xl text-slate-400 hover:bg-red-500/10 hover:text-red-500 transition-all group"
+          className="w-full flex items-center gap-3 px-3 py-2 mt-2 rounded-lg text-[#525252] text-sm hover:text-red-400 hover:bg-red-500/10 transition-all duration-100 cursor-pointer"
         >
-          <LogOut size={20} className="group-hover:rotate-12 transition-transform" />
-          {!collapsed && <span className="font-bold text-sm tracking-tight">Sign Out</span>}
+          <LogOut size={16} className="shrink-0" />
+          <span>Sign Out</span>
         </button>
       </div>
-    </motion.aside>
+    </aside>
   );
 };
 
 export default Sidebar;
+

@@ -19,7 +19,7 @@ const ProfilePage = lazy(() => import('../pages/ProfilePage'));
 
 const AppRoutes: React.FC = () => {
   return (
-    <Suspense fallback={<div className="flex h-screen items-center justify-center text-slate-400">Loading...</div>}>
+    <Suspense fallback={<div className="flex h-screen items-center justify-center text-[#a1a1a1]">Loading...</div>}>
       <Routes>
         {/* Public Routes */}
         <Route path="/login" element={<LoginPage />} />
@@ -48,3 +48,4 @@ const AppRoutes: React.FC = () => {
 
 
 export default AppRoutes;
+

@@ -113,3 +113,4 @@ public class RuleController {
         return ResponseEntity.ok(ApiResponse.success("Condition validated", data));
     }
 }
+

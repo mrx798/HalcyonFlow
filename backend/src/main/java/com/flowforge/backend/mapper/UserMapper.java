@@ -9,3 +9,4 @@ import org.mapstruct.ReportingPolicy;
 public interface UserMapper {
     UserResponse toResponse(User entity);
 }
+

@@ -27,26 +27,28 @@ const StatCard: React.FC<{
   title: string; 
   value: string | number; 
   icon: any; 
-  color: string;
+  iconBgClass: string;
+  iconTextClass: string;
   trend?: string;
-}> = ({ title, value, icon: Icon, color, trend }) => (
+  trendColor?: string;
+}> = ({ title, value, icon: Icon, iconBgClass, iconTextClass, trend, trendColor = 'emerald' }) => (
   <motion.div 
-    whileHover={{ y: -5 }}
-    className="glass-card p-6 flex flex-col gap-4"
+    whileHover={{ y: -2 }}
+    className="bg-[#0e0e0e] border border-white/[0.06] rounded-xl p-5 hover:border-white/[0.12] transition-all duration-150 cursor-pointer flex flex-col justify-between"
   >
-    <div className="flex items-center justify-between">
-      <div className={`p-3 rounded-xl bg-${color}-500/10 border border-${color}-500/20`}>
-        <Icon className={`w-6 h-6 text-${color}-500`} />
+    <div className="flex items-start justify-between">
+      <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${iconBgClass} ${iconTextClass}`}>
+        <Icon className="w-5 h-5" />
       </div>
       {trend && (
-        <span className="text-xs font-medium text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded-full flex items-center gap-1">
-          <ArrowUpRight className="w-3 h-3" /> {trend}
+        <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-${trendColor}-500/10 text-${trendColor}-400 border border-${trendColor}-500/20`}>
+          {trend}
         </span>
       )}
     </div>
-    <div>
-      <p className="text-sm text-slate-400 font-medium">{title}</p>
-      <p className="text-2xl font-bold text-white mt-1">{value}</p>
+    <div className="mt-4">
+      <p className="text-3xl font-bold text-[#fafafa] tracking-tight mt-3">{value}</p>
+      <p className="text-[#525252] text-xs uppercase tracking-wider mt-1">{title}</p>
     </div>
   </motion.div>
 );
@@ -78,7 +80,7 @@ const DashboardPage: React.FC = () => {
   if (statsLoading || executionsLoading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <Activity className="w-8 h-8 text-cyan-500 animate-spin" />
+        <Activity className="w-8 h-8 text-amber-500 animate-spin" />
       </div>
     );
   }
@@ -92,15 +94,15 @@ const DashboardPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 pt-4 pb-12 px-2">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white">System Overview</h1>
-          <p className="text-slate-400 mt-1">Real-time performance metrics for your workflows.</p>
+          <h1 className="text-2xl font-bold text-[#fafafa] tracking-tight leading-normal py-1">System Overview</h1>
+          <p className="text-[#a1a1a1] text-sm mt-1">Real-time performance metrics for your workflows.</p>
         </div>
         <button 
           onClick={() => navigate('/workflows')}
-          className="btn-primary flex items-center gap-2"
+          className="bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-black font-semibold px-4 py-2 rounded-lg transition-all duration-150 flex items-center gap-2 text-sm"
         >
           <Workflow className="w-4 h-4" /> New Workflow
         </button>
@@ -112,41 +114,45 @@ const DashboardPage: React.FC = () => {
           title="Total Workflows" 
           value={stats.totalWorkflows} 
           icon={Workflow} 
-          color="cyan" 
+          iconBgClass="bg-violet-500/15"
+          iconTextClass="text-violet-400"
           trend="+12%"
         />
         <StatCard 
           title="Active Executions" 
           value={stats.totalExecutions} 
           icon={Activity} 
-          color="purple" 
+          iconBgClass="bg-amber-500/15"
+          iconTextClass="text-amber-400"
         />
         <StatCard 
           title="Success Rate" 
           value={`${stats.successRate}%`} 
           icon={CheckCircle2} 
-          color="emerald" 
+          iconBgClass="bg-emerald-500/15"
+          iconTextClass="text-emerald-400"
           trend="+2.4%"
         />
         <StatCard 
           title="Pending Approvals" 
           value={stats.pendingApprovals} 
           icon={MousePointer2} 
-          color="amber" 
+          iconBgClass="bg-amber-500/15"
+          iconTextClass="text-amber-400"
         />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Performance Chart */}
-        <div className="lg:col-span-2 glass-card p-6">
+        <div className="lg:col-span-2 bg-[#0e0e0e] border border-white/[0.06] rounded-xl p-5">
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-xl font-bold text-white">Execution Trends</h2>
-            <div className="flex items-center gap-4 text-xs font-medium">
-              <div className="flex items-center gap-1.5 text-emerald-400">
-                <div className="w-3 h-3 bg-emerald-500 rounded-full" /> Success
+            <h2 className="text-[#fafafa] text-sm font-semibold tracking-tight">Execution Trends</h2>
+            <div className="flex items-center gap-4 text-[10px] font-medium uppercase tracking-wider text-[#a1a1a1]">
+              <div className="flex items-center gap-1.5 flex-shrink-0">
+                <div className="w-2 h-2 bg-emerald-500 rounded-full" /> SUCCESS
               </div>
-              <div className="flex items-center gap-1.5 text-red-400">
-                <div className="w-3 h-3 bg-red-500 rounded-full" /> Failed
+              <div className="flex items-center gap-1.5 flex-shrink-0">
+                <div className="w-2 h-2 bg-red-500 rounded-full" /> FAILED
               </div>
             </div>
           </div>
@@ -155,38 +161,42 @@ const DashboardPage: React.FC = () => {
               <AreaChart data={chartData}>
                 <defs>
                   <linearGradient id="colorSuccess" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#22c55e" stopOpacity={0.15}/>
+                    <stop offset="95%" stopColor="#22c55e" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
                 <XAxis 
                   dataKey="name" 
-                  stroke="#94a3b8" 
-                  fontSize={12} 
+                  stroke="#525252" 
+                  fontSize={10} 
                   tickLine={false} 
                   axisLine={false}
+                  dy={10}
                 />
                 <YAxis 
-                  stroke="#94a3b8" 
-                  fontSize={12} 
+                  stroke="#525252" 
+                  fontSize={10} 
                   tickLine={false} 
                   axisLine={false}
                   tickFormatter={(val) => `${val}`}
+                  dx={-10}
                 />
                 <Tooltip 
                   contentStyle={{ 
-                    backgroundColor: '#1e293b', 
-                    border: '1px solid #334155',
-                    borderRadius: '12px',
-                    color: '#f1f5f9'
+                    backgroundColor: '#141414', 
+                    border: '1px solid rgba(255,255,255,0.10)',
+                    borderRadius: '8px',
+                    color: '#fafafa',
+                    fontSize: '12px'
                   }}
+                  itemStyle={{ color: '#a1a1a1' }}
                 />
                 <Area 
                   type="monotone" 
                   dataKey="success" 
-                  stroke="#10b981" 
-                  strokeWidth={3}
+                  stroke="#22c55e" 
+                  strokeWidth={2}
                   fillOpacity={1} 
                   fill="url(#colorSuccess)" 
                 />
@@ -194,7 +204,7 @@ const DashboardPage: React.FC = () => {
                   type="monotone" 
                   dataKey="failed" 
                   stroke="#ef4444" 
-                  strokeWidth={3}
+                  strokeWidth={2}
                   fill="transparent"
                 />
               </AreaChart>
@@ -203,38 +213,40 @@ const DashboardPage: React.FC = () => {
         </div>
 
         {/* Recent Executions */}
-        <div className="glass-card p-6">
-          <h2 className="text-xl font-bold text-white mb-6">Recent Activity</h2>
-          <div className="space-y-6">
+        <div className="bg-[#0e0e0e] border border-white/[0.06] rounded-xl flex flex-col h-full overflow-hidden">
+          <div className="p-5 border-b border-white/[0.04]">
+            <h2 className="text-[#fafafa] text-sm font-semibold tracking-tight">Recent Activity</h2>
+          </div>
+          <div className="flex-1 overflow-y-auto custom-scrollbar">
             {recentExecutions.length > 0 ? (
               recentExecutions.map((execution: any) => (
-                <div key={execution.id} className="flex items-start gap-4">
-                  <div className={`p-2 rounded-lg ${
-                    execution.status === 'COMPLETED' ? 'bg-emerald-500/10 text-emerald-500' :
-                    execution.status === 'FAILED' ? 'bg-red-500/10 text-red-500' :
-                    'bg-cyan-500/10 text-cyan-500'
-                  }`}>
-                    {execution.status === 'COMPLETED' ? <CheckCircle2 size={16} /> : <Clock size={16} />}
-                  </div>
+                <div key={execution.id} className="border-b border-white/[0.04] px-5 py-3 hover:bg-white/[0.02] transition-all duration-100 cursor-pointer flex items-start gap-3">
+                  <div className={`mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                    execution.status === 'COMPLETED' ? 'bg-emerald-500' :
+                    execution.status === 'FAILED' ? 'bg-red-500' :
+                    'bg-amber-500'
+                  }`} />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-slate-200 truncate">{execution.workflowName}</p>
-                    <p className="text-xs text-slate-400 mt-0.5">Triggered by {execution.triggeredByName}</p>
+                    <p className="text-[#fafafa] text-sm font-medium truncate">{execution.workflowName}</p>
+                    <p className="text-[#525252] text-xs mt-0.5 truncate">Triggered by {execution.triggeredByName}</p>
                   </div>
-                  <span className="text-[10px] text-slate-500 whitespace-nowrap">
+                  <span className="text-[10px] text-[#3a3a3a] font-mono whitespace-nowrap mt-0.5">
                     {new Date(execution.createdAt).toLocaleTimeString()}
                   </span>
                 </div>
               ))
             ) : (
               <div className="text-center py-8">
-                <Clock className="w-12 h-12 text-slate-700 mx-auto mb-4" />
-                <p className="text-slate-500 text-sm">No recent activity found.</p>
+                <Clock className="w-8 h-8 text-[#3a3a3a] mx-auto mb-3" />
+                <p className="text-[#525252] text-xs uppercase tracking-wider">No recent activity</p>
               </div>
             )}
           </div>
-          <button className="w-full mt-8 py-2 text-sm text-cyan-500 font-medium hover:underline">
-            View All Activity
-          </button>
+          <div className="p-4 border-t border-white/[0.04] bg-[#080808]/50">
+            <button className="w-full text-xs text-[#a1a1a1] hover:text-[#fafafa] font-medium transition-colors">
+              View All Activity →
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -242,3 +254,4 @@ const DashboardPage: React.FC = () => {
 };
 
 export default DashboardPage;
+

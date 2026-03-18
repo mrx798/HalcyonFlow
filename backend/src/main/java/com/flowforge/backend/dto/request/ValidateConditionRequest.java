@@ -19,3 +19,4 @@ public class ValidateConditionRequest {
     @Size(max = 500, message = "Condition must not exceed 500 characters")
     private String condition;
 }
+

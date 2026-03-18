@@ -10,3 +10,4 @@ const RuleEditorPage: React.FC = () => {
 };
 
 export default RuleEditorPage;
+

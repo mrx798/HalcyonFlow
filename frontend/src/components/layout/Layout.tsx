@@ -5,29 +5,21 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation, Outlet } from 'react-router-dom';
 
 const Layout: React.FC = () => {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const location = useLocation();
-
   return (
-    <div className="flex h-screen bg-slate-900 overflow-hidden">
-      <Sidebar collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />
+    <div className="flex min-h-screen bg-[#080808]">
+      <Sidebar />
       
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 ml-52 relative">
         <Navbar />
         
-        <main className="flex-1 overflow-y-auto custom-scrollbar p-8">
+        <main className="flex-1 p-6 lg:p-10 pt-20 max-w-7xl mx-auto w-full">
           <Outlet />
         </main>
-      </div>
-
-      {/* Background Decor */}
-      <div className="fixed top-0 left-0 w-full h-full pointer-events-none -z-10 overflow-hidden">
-        <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-cyan-500/10 rounded-full blur-[150px]" />
-        <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-purple-500/10 rounded-full blur-[150px]" />
       </div>
     </div>
   );
 };
 
 export default Layout;
+
 

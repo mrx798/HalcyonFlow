@@ -8,7 +8,7 @@ import java.util.UUID;
 public final class SecurityUtils {
 
     private SecurityUtils() {
-        // Utility class — no instantiation
+        // Utility class â€” no instantiation
     }
 
     /**
@@ -33,3 +33,4 @@ public final class SecurityUtils {
         return authentication.getName();
     }
 }
+

@@ -14,7 +14,8 @@ import {
   Layers,
   Zap,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Trash2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
@@ -23,13 +24,13 @@ import { useNavigate } from 'react-router-dom';
 
 const StatusBadge: React.FC<{ status: Workflow['status']; active: boolean }> = ({ status, active }) => {
   const colors = {
-    DRAFT: 'bg-slate-500/10 text-slate-400 border-slate-500/20',
-    ACTIVE: active ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-    ARCHIVED: 'bg-red-500/10 text-red-400 border-red-500/20',
+    DRAFT: 'bg-white/[0.04] text-[#a1a1a1] border-white/[0.08]',
+    ACTIVE: active ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-500 border-amber-500/20',
+    ARCHIVED: 'bg-red-500/10 text-red-500 border-red-500/20',
   };
 
   return (
-    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border uppercase tracking-wider ${colors[status]}`}>
+    <span className={`px-2.5 py-0.5 rounded-md text-[10px] font-bold border uppercase tracking-widest ${colors[status]}`}>
       {status === 'ACTIVE' && !active ? 'PAUSED' : status}
     </span>
   );
@@ -43,6 +44,7 @@ const WorkflowListPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newWorkflowName, setNewWorkflowName] = useState('');
   const [newWorkflowDesc, setNewWorkflowDesc] = useState('');
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -92,74 +94,90 @@ const WorkflowListPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+    <div className="space-y-8 pb-12">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-8 border-b border-white/[0.06] pb-6">
         <div>
-          <h1 className="text-3xl font-bold text-white">Your Workflows</h1>
-          <p className="text-slate-400 mt-1">Manage and monitor your automation processes.</p>
+          <h1 className="text-2xl font-semibold text-[#fafafa] tracking-tight">Your Workflows</h1>
+          <p className="text-[#a1a1a1] font-mono text-sm mt-2">Manage and monitor your automation processes.</p>
         </div>
-        <button onClick={() => setIsModalOpen(true)} className="btn-primary flex items-center gap-2 h-fit">
-          <Plus className="w-5 h-5" /> New workflow
+        <button onClick={() => setIsModalOpen(true)} className="btn-primary flex items-center gap-2 h-fit text-xs font-bold tracking-widest uppercase">
+          <Plus className="w-4 h-4" /> New workflow
         </button>
       </div>
 
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="glass-card w-full max-w-md p-6 relative">
-            <h2 className="text-xl font-bold text-white mb-4">Create New Workflow</h2>
-            <div className="space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            className="glass-card w-full max-w-md p-8 relative shadow-[0_0_50px_rgba(0,0,0,0.5)]"
+          >
+            <div className="flex items-center gap-3 mb-8 border-b border-white/[0.06] pb-6">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500">
+                <Zap className="w-5 h-5" />
+              </div>
+              <h2 className="text-xl font-bold text-[#fafafa] tracking-tight">Create New Workflow</h2>
+            </div>
+
+            <div className="space-y-6">
               <div>
-                <label className="text-sm text-slate-400">Name</label>
+                <label className="text-[10px] font-bold text-[#a1a1a1] uppercase tracking-widest block mb-2 px-1">
+                  Workflow Name
+                </label>
                 <input 
                   type="text" 
-                  className="w-full input-field mt-1" 
+                  className="input-field" 
+                  autoFocus
                   value={newWorkflowName}
                   onChange={e => setNewWorkflowName(e.target.value)}
-                  placeholder="e.g. Expense Approval"
+                  placeholder="e.g. Daily Data Sync"
                 />
               </div>
               <div>
-                <label className="text-sm text-slate-400">Description</label>
+                <label className="text-[10px] font-bold text-[#a1a1a1] uppercase tracking-widest block mb-2 px-1">
+                  Description
+                </label>
                 <textarea 
-                  className="w-full input-field mt-1" 
+                  className="input-field" 
                   value={newWorkflowDesc}
                   onChange={e => setNewWorkflowDesc(e.target.value)}
-                  placeholder="What does this workflow do?"
+                  placeholder="What is the purpose of this workflow?"
                   rows={3}
                 />
               </div>
-              <div className="flex gap-3 justify-end mt-6">
+              
+              <div className="flex gap-4 justify-end mt-10 pt-6 border-t border-white/[0.04]">
                 <button 
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-slate-700 hover:bg-slate-800 text-slate-300 transition-colors"
+                  className="btn-secondary"
                 >
                   Cancel
                 </button>
                 <button 
                   onClick={() => createMutation.mutate()}
-                  className="btn-primary !bg-cyan-600 hover:!bg-cyan-500"
+                  className="btn-primary min-w-[140px]"
                   disabled={createMutation.isPending || !newWorkflowName}
                 >
-                  {createMutation.isPending ? 'Creating...' : 'Create Workflow'}
+                  {createMutation.isPending ? 'Initializing...' : 'Create Workflow'}
                 </button>
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
       )}
 
-      <div className="flex items-center gap-4 py-2 border-b border-slate-800">
+      <div className="flex items-center gap-4 py-3 border-b border-white/[0.04] mb-8">
         <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#525252]" />
           <input
             type="text"
             placeholder="Search by name or description..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-transparent border-none pl-10 pr-4 py-2 focus:ring-0 outline-none text-sm text-white placeholder-slate-600"
+            className="w-full bg-transparent border-none pl-10 pr-4 py-2 focus:ring-0 outline-none text-sm text-[#fafafa] placeholder-[#525252] font-mono"
           />
         </div>
-        <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800/50 hover:bg-slate-700 transition-colors text-xs font-medium text-slate-300">
+        <button className="flex items-center gap-2 px-4 py-2 rounded-lg border border-white/[0.10] bg-white/[0.02] hover:bg-white/[0.06] transition-colors text-[10px] font-bold uppercase tracking-widest text-[#fafafa]">
           <Filter className="w-3 h-3" /> Filter
         </button>
       </div>
@@ -168,7 +186,7 @@ const WorkflowListPage: React.FC = () => {
         <AnimatePresence>
           {isLoading ? (
             Array(4).fill(0).map((_, i) => (
-              <div key={i} className="glass-card p-6 h-48 animate-pulse bg-slate-800/30" />
+              <div key={i} className="glass-card p-6 h-48 animate-pulse bg-white/[0.02]" />
             ))
           ) : workflows.map((workflow: Workflow, index: number) => (
             <motion.div
@@ -176,57 +194,105 @@ const WorkflowListPage: React.FC = () => {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.05 }}
-              className="glass-card group hover:border-cyan-500/40 transition-all duration-500 overflow-hidden"
+              className="glass-card group hover:border-amber-500/40 transition-all duration-500 overflow-hidden bg-[#0e0e0e] border border-white/[0.06]"
             >
               <div className="p-6">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-500 group-hover:scale-110 transition-transform">
-                      <Zap className="w-6 h-6" />
+                    <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 group-hover:scale-110 transition-transform">
+                      <Zap className="w-5 h-5" />
                     </div>
                     <div>
                       <Link to={`/workflows/${workflow.id}`}>
-                        <h3 className="text-lg font-bold text-slate-200 group-hover:text-cyan-400 transition-colors">
+                        <h3 className="text-lg font-bold text-[#fafafa] group-hover:text-amber-500 transition-colors tracking-tight">
                           {workflow.name}
                         </h3>
                       </Link>
-                      <p className="text-slate-400 text-sm mt-0.5 line-clamp-1">{workflow.description}</p>
+                      <p className="text-[#a1a1a1] text-sm mt-0.5 line-clamp-1">{workflow.description}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <StatusBadge status={workflow.status} active={workflow.isActive} />
-                    <button className="p-2 hover:bg-slate-700 rounded-lg transition-colors text-slate-500">
-                      <MoreVertical className="w-4 h-4" />
-                    </button>
+                    <div className="relative">
+                      <button 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setOpenMenuId(openMenuId === workflow.id ? null : workflow.id);
+                        }}
+                        className="p-2 hover:bg-white/[0.08] rounded-lg transition-colors text-[#525252]"
+                      >
+                        <MoreVertical className="w-4 h-4" />
+                      </button>
+                      
+                      <AnimatePresence>
+                        {openMenuId === workflow.id && (
+                          <>
+                            <div className="fixed inset-0 z-10" onClick={() => setOpenMenuId(null)} />
+                            <motion.div 
+                              initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                              animate={{ opacity: 1, scale: 1, y: 0 }}
+                              exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                              className="absolute right-0 top-full mt-2 w-48 bg-[#141414] border border-white/[0.10] rounded-xl shadow-2xl z-20 overflow-hidden py-1"
+                            >
+                              <Link 
+                                to={`/workflows/${workflow.id}`}
+                                className="flex items-center gap-2 px-4 py-2 hover:bg-white/[0.04] text-sm text-[#fafafa] transition-colors"
+                              >
+                                <Edit3 className="w-4 h-4 text-[#a1a1a1]" /> Edit Workflow
+                              </Link>
+                              <button 
+                                onClick={() => {
+                                  handleToggle(workflow.id, workflow.isActive);
+                                  setOpenMenuId(null);
+                                }}
+                                className="w-full text-left flex items-center gap-2 px-4 py-2 hover:bg-white/[0.04] text-sm text-[#fafafa] transition-colors"
+                              >
+                                <Play className="w-4 h-4 text-[#a1a1a1]" /> {workflow.isActive ? 'Pause Workflow' : 'Activate Workflow'}
+                              </button>
+                              <div className="h-px bg-white/[0.04] my-1" />
+                              <button 
+                                onClick={() => {
+                                  toast.error('Delete functionality restricted');
+                                  setOpenMenuId(null);
+                                }}
+                                className="w-full text-left flex items-center gap-2 px-4 py-2 hover:bg-red-500/10 text-sm text-red-500 transition-colors"
+                              >
+                                <Trash2 className="w-4 h-4" /> Delete Workflow
+                              </button>
+                            </motion.div>
+                          </>
+                        )}
+                      </AnimatePresence>
+                    </div>
                   </div>
                 </div>
 
-                <div className="mt-8 grid grid-cols-3 gap-4 border-t border-slate-700/50 pt-6">
-                  <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
-                    <Layers className="w-3.5 h-3.5" />
+                <div className="mt-8 grid grid-cols-3 gap-4 border-t border-white/[0.04] pt-6">
+                  <div className="flex items-center gap-2 text-xs text-[#a1a1a1] font-mono tracking-wide">
+                    <Layers className="w-3.5 h-3.5 text-[#525252]" />
                     {workflow.stepCount || 0} Steps
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
-                    <Calendar className="w-3.5 h-3.5" />
+                  <div className="flex items-center gap-2 text-xs text-[#a1a1a1] font-mono tracking-wide">
+                    <Calendar className="w-3.5 h-3.5 text-[#525252]" />
                     v{workflow.version}
                   </div>
                   <div className="flex items-center justify-end gap-3">
                     <button 
                       onClick={() => handleToggle(workflow.id, workflow.isActive)}
-                      className={`p-2 rounded-lg transition-all ${
+                      className={`p-2 rounded-lg transition-all border ${
                         workflow.isActive 
-                          ? 'bg-amber-500/10 text-amber-500 hover:bg-amber-500/20' 
-                          : 'bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20'
+                          ? 'bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 border-amber-500/20' 
+                          : 'bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 border-emerald-500/20'
                       }`}
                     >
-                      <Play className={`w-4 h-4 ${workflow.isActive ? 'fill-amber-500' : 'fill-emerald-500'}`} />
+                      <Play className={`w-3.5 h-3.5 ${workflow.isActive ? 'fill-amber-500' : 'fill-emerald-500'}`} />
                     </button>
                     <Link 
                       to={`/workflows/${workflow.id}`}
-                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-cyan-600/10 text-cyan-500 hover:bg-cyan-600/20 transition-all text-xs font-bold uppercase tracking-widest"
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.04] text-[#fafafa] hover:bg-white/[0.08] border border-white/[0.10] transition-all text-[10px] font-bold uppercase tracking-widest"
                     >
-                      <Edit3 className="w-4 h-4" />
-                      <span>[Edit]</span>
+                      <Edit3 className="w-3.5 h-3.5 text-[#a1a1a1]" />
+                      <span>Edit</span>
                     </Link>
                   </div>
                 </div>
@@ -238,36 +304,36 @@ const WorkflowListPage: React.FC = () => {
 
       {/* Pagination Controls */}
       {pageData && pageData.totalPages > 0 && (
-        <div className="flex items-center justify-between border-t border-slate-800 pt-6">
-          <div className="flex items-center gap-4 text-sm text-slate-400">
+        <div className="flex items-center justify-between border-t border-white/[0.04] pt-8 mt-8">
+          <div className="flex items-center gap-4 text-xs tracking-wider text-[#a1a1a1] font-mono">
             <span>
               Showing {pageData.pageable.offset + 1} to {Math.min(pageData.pageable.offset + pageData.size, pageData.totalElements)} of {pageData.totalElements} results
             </span>
             <select 
               value={size} 
               onChange={e => { setSize(Number(e.target.value)); setPage(0); }}
-              className="bg-slate-900 border border-slate-700 rounded px-2 py-1 outline-none focus:border-cyan-500"
+              className="bg-[#141414] border border-white/[0.10] rounded-lg px-2 py-1.5 outline-none focus:border-amber-500 text-[#fafafa] transition-all"
             >
               <option value={10}>10 per page</option>
               <option value={20}>20 per page</option>
               <option value={50}>50 per page</option>
             </select>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 font-mono">
             <button 
               onClick={() => setPage(Math.max(0, page - 1))}
               disabled={page === 0}
-              className="p-2 rounded border border-slate-700 hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-slate-300"
+              className="p-2 rounded-lg border border-white/[0.10] bg-white/[0.02] hover:bg-white/[0.06] disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-[#fafafa]"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <span className="text-sm text-slate-300 px-4">
-              Page {page + 1} of {pageData.totalPages}
+            <span className="text-xs tracking-wide text-[#a1a1a1] px-4 font-bold uppercase">
+              Page <span className="text-amber-500">{page + 1}</span> / {pageData.totalPages}
             </span>
             <button 
               onClick={() => setPage(Math.min(pageData.totalPages - 1, page + 1))}
               disabled={page >= pageData.totalPages - 1}
-              className="p-2 rounded border border-slate-700 hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-slate-300"
+              className="p-2 rounded-lg border border-white/[0.10] bg-white/[0.02] hover:bg-white/[0.06] disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-[#fafafa]"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -276,11 +342,11 @@ const WorkflowListPage: React.FC = () => {
       )}
 
       {!isLoading && workflows.length === 0 && (
-        <div className="text-center py-20 bg-slate-800/20 rounded-3xl border border-slate-800 border-dashed">
-          <Zap className="w-16 h-16 text-slate-700 mx-auto mb-6 opacity-20" />
-          <h3 className="text-xl font-bold text-slate-400">No matching workflows</h3>
-          <p className="text-slate-500 mt-2">Try adjusting your search or create a new one.</p>
-          <button onClick={() => setSearch('')} className="mt-8 text-cyan-500 font-medium hover:underline flex items-center justify-center gap-2 mx-auto">
+        <div className="text-center py-20 bg-white/[0.02] rounded-3xl border border-white/[0.06] border-dashed">
+          <Zap className="w-16 h-16 text-[#3a3a3a] mx-auto mb-6" />
+          <h3 className="text-xl font-bold text-[#fafafa] tracking-tight">No matching workflows</h3>
+          <p className="text-[#a1a1a1] mt-2 text-sm">Try adjusting your search or create a new one.</p>
+          <button onClick={() => setSearch('')} className="mt-8 text-amber-500 font-bold uppercase tracking-widest text-[10px] hover:underline flex items-center justify-center gap-2 mx-auto">
             Clear filters
           </button>
         </div>
@@ -290,3 +356,4 @@ const WorkflowListPage: React.FC = () => {
 };
 
 export default WorkflowListPage;
+

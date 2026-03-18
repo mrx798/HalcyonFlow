@@ -35,3 +35,4 @@ public class AppProperties {
         private int queueCapacity = 25;
     }
 }
+

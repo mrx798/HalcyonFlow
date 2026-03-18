@@ -34,33 +34,33 @@ const ProfilePage: React.FC = () => {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <h1 className="text-3xl font-bold text-white">Your Profile</h1>
-        <p className="text-slate-400 mt-1">Manage your identity and personal information.</p>
+        <h1 className="text-3xl font-semibold text-[#fafafa] tracking-tight">Your Profile</h1>
+        <p className="text-[#a1a1a1] mt-1 font-mono text-sm">Manage your identity and personal information.</p>
       </motion.div>
 
       <div className="glass-card p-8 space-y-8">
         <div className="flex items-center gap-8">
-          <div className="w-24 h-24 bg-gradient-to-br from-cyan-500 to-purple-500 rounded-3xl flex items-center justify-center border-4 border-slate-800 shadow-2xl relative">
-            <UserIcon size={40} className="text-white" />
-            <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 rounded-full border-4 border-slate-900" />
+          <div className="w-24 h-24 bg-gradient-to-br from-amber-500 to-rose-500 rounded-3xl flex items-center justify-center border-4 border-[#141414] shadow-2xl relative">
+            <UserIcon size={40} className="text-[#141414]" />
+            <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 rounded-full border-4 border-[#080808]" />
           </div>
           <div className="space-y-1">
             <div className="flex items-center gap-3">
-              <h3 className="text-2xl font-bold text-white">{user?.name}</h3>
-              <span className="px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 text-[10px] font-bold uppercase tracking-wider">
+              <h3 className="text-2xl font-bold text-[#fafafa] tracking-tight">{user?.name}</h3>
+              <span className="px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-500 border border-amber-500/20 text-[10px] font-bold uppercase tracking-widest">
                 {user?.role}
               </span>
             </div>
-            <p className="text-slate-400 text-sm flex items-center gap-2">
-              <Mail size={14} /> {user?.email}
+            <p className="text-[#a1a1a1] font-mono text-sm flex items-center gap-2">
+              <Mail size={14} className="text-[#525252]" /> {user?.email}
             </p>
           </div>
         </div>
 
-        <form onSubmit={handleUpdateProfile} className="space-y-6 pt-6 border-t border-slate-700/50">
+        <form onSubmit={handleUpdateProfile} className="space-y-6 pt-6 border-t border-white/[0.06]">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+              <label className="text-[10px] font-bold text-[#525252] uppercase tracking-widest flex items-center gap-2">
                 <UserIcon size={12} /> Full Name
               </label>
               <input 
@@ -72,7 +72,7 @@ const ProfilePage: React.FC = () => {
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+              <label className="text-[10px] font-bold text-[#525252] uppercase tracking-widest flex items-center gap-2">
                 <Mail size={12} /> Email Address
               </label>
               <input 
@@ -83,7 +83,7 @@ const ProfilePage: React.FC = () => {
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+              <label className="text-[10px] font-bold text-[#525252] uppercase tracking-widest flex items-center gap-2">
                 <Smartphone size={12} /> Account ID
               </label>
               <input 
@@ -94,22 +94,22 @@ const ProfilePage: React.FC = () => {
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+              <label className="text-[10px] font-bold text-[#525252] uppercase tracking-widest flex items-center gap-2">
                 <Shield size={12} /> Security Level
               </label>
-              <div className="flex items-center gap-2 px-4 py-2 bg-slate-800/50 rounded-xl border border-slate-700">
+              <div className="flex items-center gap-2 px-4 py-3 bg-[#141414] rounded-xl border border-white/[0.08]">
                 <Key size={14} className="text-amber-500" />
-                <span className="text-xs text-slate-300">Standard Encryption</span>
+                <span className="text-xs text-[#a1a1a1] font-mono">Standard Encryption</span>
               </div>
             </div>
           </div>
 
-          <div className="flex gap-4 justify-end">
+          <div className="flex gap-4 justify-end mt-8">
             {!isEditing ? (
               <button 
                 type="button"
                 onClick={() => setIsEditing(true)}
-                className="px-6 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 hover:bg-slate-700 transition-all font-bold text-sm"
+                className="px-6 py-2 rounded-lg bg-[#141414] border border-white/[0.08] text-[#a1a1a1] hover:bg-white/[0.04] transition-all font-bold text-[10px] tracking-widest uppercase"
               >
                 EDIT PROFILE
               </button>
@@ -118,14 +118,14 @@ const ProfilePage: React.FC = () => {
                 <button 
                   type="button"
                   onClick={() => { setIsEditing(false); setName(user?.name || ''); }}
-                  className="px-6 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 hover:text-slate-200 transition-all font-bold text-sm"
+                  className="px-6 py-2 rounded-lg bg-[#141414] border border-white/[0.08] text-[#525252] hover:text-[#fafafa] transition-all font-bold text-[10px] tracking-widest uppercase"
                 >
                   CANCEL
                 </button>
                 <button 
                   type="submit"
                   disabled={isLoading}
-                  className="btn-primary flex items-center gap-2 px-6 py-2"
+                  className="btn-primary flex items-center gap-2 px-6 py-2 tracking-widest uppercase font-bold text-xs"
                 >
                   <Save size={16} /> {isLoading ? 'SAVING...' : 'SAVE CHANGES'}
                 </button>
@@ -135,12 +135,12 @@ const ProfilePage: React.FC = () => {
         </form>
       </div>
 
-      <div className="glass-card p-8 border-red-500/20 overflow-hidden relative">
-        <h3 className="text-lg font-bold text-white mb-2 font-display uppercase tracking-tight">Security Center</h3>
-        <p className="text-sm text-slate-400 mb-6 font-medium">To change your password or delete your account, please visit the main Settings page.</p>
+      <div className="glass-card p-8 border border-red-500/20 overflow-hidden relative shadow-2xl mt-8 pt-10">
+        <h3 className="text-xl font-bold text-[#fafafa] mb-2 tracking-tight">Security Center</h3>
+        <p className="text-sm text-[#a1a1a1] mb-6 font-medium">To change your password or delete your account, please visit the main Settings page.</p>
         <button 
           onClick={() => window.location.href = '/settings'}
-          className="px-6 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 hover:bg-slate-700 transition-all font-bold text-sm"
+          className="px-6 py-3 rounded-lg bg-[#141414] border border-white/[0.08] text-[#a1a1a1] hover:bg-white/[0.06] hover:text-[#fafafa] transition-all font-bold text-[10px] tracking-widest uppercase"
         >
           VIEW SETTINGS
         </button>
@@ -150,3 +150,4 @@ const ProfilePage: React.FC = () => {
 };
 
 export default ProfilePage;
+

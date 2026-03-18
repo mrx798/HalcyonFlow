@@ -49,8 +49,8 @@ const ExecutionViewPage: React.FC = () => {
     } catch { toast.error('Approval failed'); }
   };
 
-  if (execLoading) return <div className="p-10 text-slate-400 font-mono">Loading execution...</div>;
-  if (!execution) return <div className="p-10 text-slate-400 font-mono">Execution not found.</div>;
+  if (execLoading) return <div className="p-10 text-[#a1a1a1] font-mono">Loading execution...</div>;
+  if (!execution) return <div className="p-10 text-[#a1a1a1] font-mono">Execution not found.</div>;
 
   const isCompleted = execution.status === 'COMPLETED';
   const isFailed = execution.status === 'FAILED';
@@ -62,21 +62,21 @@ const ExecutionViewPage: React.FC = () => {
   /* ━━━━━━━━━━━━━━━━━━━━ STAGE 2: PROGRESS VIEW ━━━━━━━━━━━━━━━━━━━━ */
   const renderProgress = () => {
     return (
-      <div className="max-w-xl border border-white/20 p-6 font-mono text-sm space-y-6 shadow-2xl bg-[#0a0f1c]">
-        <div className="border-b border-white/20 pb-4">
-          <h2 className="text-white font-bold text-base">Execution Progress</h2>
+      <div className="max-w-xl border border-white/[0.08] p-6 font-mono text-sm space-y-6 shadow-2xl bg-[#0e0e0e] rounded-xl">
+        <div className="border-b border-white/[0.06] pb-4">
+          <h2 className="text-[#fafafa] font-bold text-base tracking-tight">Execution Progress</h2>
           <div className="flex items-center gap-2 mt-1">
-            <p className="text-slate-300">{workflow?.name || execution.workflowName}</p>
-            <span className="bg-yellow-500/20 text-yellow-500 px-2 py-0.5 rounded text-xs">[{execution.status} 🟡]</span>
+            <p className="text-[#a1a1a1]">{workflow?.name || execution.workflowName}</p>
+            <span className="bg-amber-500/20 text-amber-500 px-2 py-0.5 rounded text-[10px] font-bold tracking-widest uppercase">[{execution.status} 🟡]</span>
           </div>
         </div>
 
         <div>
-           <p className="text-slate-300 mb-1">Current Step: <span className="text-white font-bold">{currentStepId ? workflow?.steps?.find((s:any) => s.id === currentStepId)?.name || 'Unknown' : '—'}</span></p>
-           <p className="text-slate-300">Status: <span className="text-cyan-400">{isPaused ? 'Waiting for approval' : 'Running...'}</span></p>
+           <p className="text-[#a1a1a1] mb-1">Current Step: <span className="text-[#fafafa] font-bold">{currentStepId ? workflow?.steps?.find((s:any) => s.id === currentStepId)?.name || 'Unknown' : '—'}</span></p>
+           <p className="text-[#a1a1a1]">Status: <span className="text-amber-500">{isPaused ? 'Waiting for approval' : 'Running...'}</span></p>
         </div>
 
-        <div className="border border-white/20 p-4 space-y-2 bg-slate-900/50">
+        <div className="border border-white/[0.04] p-4 space-y-2 bg-[#141414] rounded-lg">
           {(workflow?.steps || []).map((step: any, idx: number) => {
             const isCurrent = step.id === currentStepId;
             const logEntry = logs.find((l:any) => l.step_name === step.name || l.stepName === step.name);
@@ -85,14 +85,14 @@ const ExecutionViewPage: React.FC = () => {
 
             return (
               <div key={step.id} className="flex items-center justify-between">
-                <span className={isCurrent ? 'text-yellow-400 font-bold' : isStepDone ? 'text-slate-300' : 'text-slate-500'}>
+                <span className={isCurrent ? 'text-amber-500 font-bold' : isStepDone ? 'text-[#a1a1a1]' : 'text-[#525252]'}>
                   Step {idx + 1}: {step.name}
                 </span>
-                <span className="text-xs shrink-0">
-                  {isCurrent ? <span className="text-yellow-400 animate-pulse">⏳ IN PROGRESS</span> :
+                <span className="text-xs shrink-0 font-bold tracking-widest uppercase text-[10px]">
+                  {isCurrent ? <span className="text-amber-500 animate-pulse">⏳ IN PROGRESS</span> :
                    isStepDone ? <span className="text-emerald-500">✅ COMPLETED</span> :
                    isStepFail ? <span className="text-red-500">❌ FAILED</span> :
-                   <span className="text-slate-600">○ PENDING</span>}
+                   <span className="text-[#525252]">○ PENDING</span>}
                 </span>
               </div>
             );
@@ -100,14 +100,14 @@ const ExecutionViewPage: React.FC = () => {
         </div>
 
         {isPaused && (
-          <div className="border border-amber-500/30 bg-amber-500/5 p-4 mt-6">
-            <p className="text-amber-500 font-bold mb-2">⚠️ Action Required</p>
-            <p className="text-slate-300 mb-4">Step "{workflow?.steps?.find((s:any) => s.id === currentStepId)?.name}" needs your approval</p>
+          <div className="border border-amber-500/30 bg-amber-500/5 p-4 mt-6 rounded-lg">
+            <p className="text-amber-500 font-bold mb-2 tracking-wide">⚠️ Action Required</p>
+            <p className="text-[#fafafa] mb-4">Step "{workflow?.steps?.find((s:any) => s.id === currentStepId)?.name}" needs your approval</p>
             <div className="flex gap-4">
-              <button onClick={() => handleApproval(true)} className="border border-emerald-500/50 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 px-4 py-1.5 rounded transition-colors text-xs font-bold">
+              <button onClick={() => handleApproval(true)} className="border border-emerald-500/50 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 px-4 py-1.5 rounded transition-colors text-[10px] uppercase tracking-widest font-bold">
                 [ ✓ Approve ]
               </button>
-              <button onClick={() => handleApproval(false)} className="border border-red-500/50 bg-red-500/10 hover:bg-red-500/20 text-red-400 px-4 py-1.5 rounded transition-colors text-xs font-bold">
+              <button onClick={() => handleApproval(false)} className="border border-red-500/50 bg-red-500/10 hover:bg-red-500/20 text-red-500 px-4 py-1.5 rounded transition-colors text-[10px] uppercase tracking-widest font-bold">
                 [ ✗ Reject ]
               </button>
             </div>
@@ -120,15 +120,15 @@ const ExecutionViewPage: React.FC = () => {
   /* ━━━━━━━━━━━━━━━━━━━━ STAGE 3: EXECUTION LOGS ━━━━━━━━━━━━━━━━━━━━ */
   const renderLogs = () => {
     return (
-      <div className="max-w-2xl border border-white/20 p-6 font-mono text-sm space-y-6 shadow-2xl bg-[#0a0f1c] mb-10">
-        <div className="border-b border-white/20 pb-4">
-          <h2 className="text-white font-bold text-base">Execution Logs</h2>
+      <div className="max-w-2xl border border-white/[0.08] p-6 font-mono text-sm space-y-6 shadow-2xl bg-[#0e0e0e] mb-10 rounded-xl">
+        <div className="border-b border-white/[0.06] pb-4">
+          <h2 className="text-[#fafafa] font-bold text-base tracking-tight">Execution Logs</h2>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-1">
-            <span className="text-slate-300">{workflow?.name || execution.workflowName}</span>
-            <span className={`px-2 py-0.5 rounded text-xs ${isCompleted ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`}>
+            <span className="text-[#a1a1a1]">{workflow?.name || execution.workflowName}</span>
+            <span className={`px-2 py-0.5 rounded text-[10px] font-bold tracking-widest uppercase ${isCompleted ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-500'}`}>
               [{execution.status} {isCompleted ? '✅' : '❌'}]
             </span>
-            <span className="text-slate-500 text-xs">Started: {new Date(execution.startedAt).toLocaleTimeString()}</span>
+            <span className="text-[#525252] text-xs">Started: {new Date(execution.startedAt).toLocaleTimeString()}</span>
           </div>
         </div>
 
@@ -137,17 +137,17 @@ const ExecutionViewPage: React.FC = () => {
             const rules = log.evaluatedRules || log.evaluated_rules || [];
             return (
               <div key={idx} className="space-y-2">
-                <h3 className="text-white font-bold">[Step {idx + 1}] {log.stepName || log.step_name}</h3>
+                <h3 className="text-[#fafafa] font-bold">[Step {idx + 1}] {log.stepName || log.step_name}</h3>
                 
                 {rules.length > 0 && (
                   <div>
-                    <p className="text-slate-400">Rules evaluated:</p>
+                    <p className="text-[#a1a1a1] text-xs">Rules evaluated:</p>
                     <div className="pl-4 space-y-1 mt-1">
                       {rules.map((r: any, ri: number) => {
                         const ruleText = r.rule || r.condition;
                         const v = Boolean(r.result);
                         return (
-                          <div key={ri} className={v ? 'text-emerald-300' : 'text-slate-500'}>
+                          <div key={ri} className={v ? 'text-emerald-400' : 'text-[#525252]'}>
                             {v ? '✅' : '❌'} {ruleText} → {v ? 'true' : 'false'}
                           </div>
                         );
@@ -156,8 +156,8 @@ const ExecutionViewPage: React.FC = () => {
                   </div>
                 )}
 
-                <div className="text-slate-300">
-                  <p>Next Step: <span className="text-white">{log.selectedNextStep || log.selected_next_step || 'End Workflow'}</span></p>
+                <div className="text-[#a1a1a1] space-y-0.5">
+                  <p>Next Step: <span className="text-[#fafafa]">{log.selectedNextStep || log.selected_next_step || 'End Workflow'}</span></p>
                   <p>Status: {log.status}</p>
                   {(log.approverId || log.approver_id || log.approverName) && (
                     <p>Approver: {(log.approverId || log.approver_id || log.approverName)}</p>
@@ -165,14 +165,14 @@ const ExecutionViewPage: React.FC = () => {
                   <p>Duration: {calcDuration(log.startedAt || log.started_at, log.endedAt || log.ended_at)}</p>
                 </div>
 
-                {idx < logs.length - 1 && <hr className="border-white/10 mt-6" />}
+                {idx < logs.length - 1 && <hr className="border-white/[0.04] mt-6" />}
               </div>
             );
           })}
         </div>
 
-        <div className="pt-6 border-t border-white/20 flex justify-center mt-8">
-          <button onClick={() => navigate('/executions')} className="border border-white/20 bg-white/5 hover:bg-white/10 text-white px-6 py-2 rounded transition-colors">
+        <div className="pt-6 border-t border-white/[0.06] flex justify-center mt-8">
+          <button onClick={() => navigate('/executions')} className="border border-white/[0.10] bg-white/[0.02] hover:bg-white/[0.06] text-[#fafafa] px-6 py-2 rounded-lg transition-colors text-[10px] font-bold tracking-widest uppercase">
             Back to Audit Logs
           </button>
         </div>
@@ -183,7 +183,7 @@ const ExecutionViewPage: React.FC = () => {
   return (
     <div className="min-h-screen py-10 px-4 flex flex-col items-center">
       <div className="self-start mb-6 ml-4 sm:ml-10">
-         <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-sm font-mono">
+         <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-[#a1a1a1] hover:text-[#fafafa] transition-colors text-xs font-mono font-bold tracking-widest uppercase">
             <ChevronLeft size={16} /> Back
          </button>
       </div>
@@ -194,3 +194,4 @@ const ExecutionViewPage: React.FC = () => {
 };
 
 export default ExecutionViewPage;
+

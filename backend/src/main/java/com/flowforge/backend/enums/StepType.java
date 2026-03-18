@@ -5,3 +5,4 @@ public enum StepType {
     APPROVAL,
     NOTIFICATION
 }
+

@@ -23,3 +23,4 @@ public class ExecuteWorkflowRequest {
     @NotNull(message = "Input data is required")
     private Map<String, Object> inputData;
 }
+

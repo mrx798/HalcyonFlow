@@ -26,3 +26,4 @@ public interface StepRepository extends JpaRepository<Step, UUID> {
     @Query("SELECT s FROM Step s WHERE s.workflow.id = :workflowId AND s.stepType = :stepType ORDER BY s.stepOrder ASC")
     List<Step> findByWorkflowIdAndStepType(@Param("workflowId") UUID workflowId, @Param("stepType") StepType stepType);
 }
+

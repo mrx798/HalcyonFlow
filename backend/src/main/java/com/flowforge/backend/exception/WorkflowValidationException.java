@@ -6,3 +6,4 @@ public class WorkflowValidationException extends RuntimeException {
         super(message);
     }
 }
+

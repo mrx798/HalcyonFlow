@@ -24,3 +24,4 @@ public class UserResponse {
     private Boolean isActive;
     private LocalDateTime createdAt;
 }
+

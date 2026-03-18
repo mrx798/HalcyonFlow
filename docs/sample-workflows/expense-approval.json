@@ -21,7 +21,7 @@
     {
       "name": "Manager Approval",
       "stepType": "APPROVAL",
-      "metadata": { "assignee": "manager@flowforge.com" },
+      "metadata": { "assignee": "manager@HalcyonFlow.com" },
       "rules": [
         { "condition": "approved == true", "nextStepName": "Finance Payout" },
         { "condition": "approved == false", "nextStepName": "Reject Notification" }
@@ -30,7 +30,7 @@
     {
       "name": "VP Approval",
       "stepType": "APPROVAL",
-      "metadata": { "assignee": "vp@flowforge.com" },
+      "metadata": { "assignee": "vp@HalcyonFlow.com" },
       "rules": [
         { "condition": "approved == true", "nextStepName": "Finance Payout" },
         { "condition": "approved == false", "nextStepName": "Reject Notification" }
@@ -52,3 +52,4 @@
     }
   ]
 }
+

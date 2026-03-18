@@ -1,7 +1,7 @@
 {
 	"info": {
-		"name": "FlowForge - Complete System Verification",
-		"description": "Complete end-to-end verification of FlowForge workflow automation platform. Contains 28 requests covering Auth, Workflows, Steps, Rules, Executions, Dashboard, Notifications, and Security.",
+		"name": "HalcyonFlow - Complete System Verification",
+		"description": "Complete end-to-end verification of HalcyonFlow workflow automation platform. Contains 28 requests covering Auth, Workflows, Steps, Rules, Executions, Dashboard, Notifications, and Security.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"variable": [
@@ -39,7 +39,7 @@
 					"script": {
 						"type": "text/javascript",
 						"exec": [
-							"var uniqueEmail = 'sharath_' + Date.now() + '@flowforge.com';",
+							"var uniqueEmail = 'sharath_' + Date.now() + '@HalcyonFlow.com';",
 							"pm.collectionVariables.set('testEmail', uniqueEmail);",
 							"console.log('Using email:', uniqueEmail);"
 						]
@@ -1049,3 +1049,4 @@
 		}
 	]
 }
+

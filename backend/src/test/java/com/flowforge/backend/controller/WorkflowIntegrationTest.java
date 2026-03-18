@@ -38,7 +38,7 @@ class WorkflowIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        userEmail = "testuser" + System.currentTimeMillis() + "@flowforge.com";
+        userEmail = "testuser" + System.currentTimeMillis() + "@HalcyonFlow.com";
         userPassword = "Password123!";
     }
 
@@ -135,3 +135,4 @@ class WorkflowIntegrationTest {
                 .andExpect(jsonPath("$.errors.inputSchema").exists());
     }
 }
+

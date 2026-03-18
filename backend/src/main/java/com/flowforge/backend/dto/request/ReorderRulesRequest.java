@@ -28,3 +28,4 @@ public class ReorderRulesRequest {
         private Integer newPriority;
     }
 }
+

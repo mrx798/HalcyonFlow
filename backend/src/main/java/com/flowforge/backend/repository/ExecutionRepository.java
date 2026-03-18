@@ -37,3 +37,4 @@ public interface ExecutionRepository extends JpaRepository<Execution, UUID> {
 
     Page<Execution> findByTriggeredByIdOrderByCreatedAtDesc(UUID userId, Pageable pageable);
 }
+

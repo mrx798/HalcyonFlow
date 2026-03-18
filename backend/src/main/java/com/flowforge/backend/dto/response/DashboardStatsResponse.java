@@ -23,3 +23,4 @@ public class DashboardStatsResponse {
     private long pendingApprovals;
     private List<ExecutionSummaryResponse> recentExecutions;
 }
+

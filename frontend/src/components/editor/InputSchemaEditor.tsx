@@ -103,8 +103,8 @@ const InputSchemaEditor: React.FC<InputSchemaEditorProps> = ({ workflow, onClose
   };
 
   const typeColors: Record<string, string> = {
-    string: 'text-cyan-400 bg-cyan-400/10 border-cyan-400/20',
-    number: 'text-purple-400 bg-purple-400/10 border-purple-400/20',
+    string: 'text-amber-400 bg-cyan-400/10 border-amber-500/20',
+    number: 'text-fuchsia-400 bg-fuchsia-400/10 border-fuchsia-400/20',
     boolean: 'text-amber-400 bg-amber-400/10 border-amber-400/20',
     date: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20',
   };
@@ -122,22 +122,22 @@ const InputSchemaEditor: React.FC<InputSchemaEditorProps> = ({ workflow, onClose
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="w-full max-w-2xl glass-card border border-slate-700/50 max-h-[85vh] flex flex-col"
+          className="w-full max-w-2xl glass-card border border-white/[0.06] max-h-[85vh] flex flex-col"
           onClick={e => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="p-6 border-b border-slate-700/50 flex items-center justify-between">
+          <div className="p-6 border-b border-white/[0.06] flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20">
-                <Database className="w-5 h-5 text-cyan-500" />
+              <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                <Database className="w-5 h-5 text-amber-500" />
               </div>
               <div>
                 <h2 className="text-lg font-bold text-white">Input Schema Builder</h2>
-                <p className="text-xs text-slate-500">Define the input fields for workflow execution</p>
+                <p className="text-xs text-[#525252]">Define the input fields for workflow execution</p>
               </div>
             </div>
-            <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-lg transition-colors">
-              <X className="w-5 h-5 text-slate-400" />
+            <button onClick={onClose} className="p-2 hover:bg-[#141414] rounded-lg transition-colors">
+              <X className="w-5 h-5 text-[#a1a1a1]" />
             </button>
           </div>
 
@@ -146,8 +146,8 @@ const InputSchemaEditor: React.FC<InputSchemaEditorProps> = ({ workflow, onClose
             {fields.length === 0 && (
               <div className="text-center py-12">
                 <Database className="w-12 h-12 text-slate-700 mx-auto mb-3" />
-                <p className="text-slate-500 text-sm">No input fields defined.</p>
-                <p className="text-slate-600 text-xs mt-1">Add fields to create the execution form.</p>
+                <p className="text-[#525252] text-sm">No input fields defined.</p>
+                <p className="text-[#525252] text-xs mt-1">Add fields to create the execution form.</p>
               </div>
             )}
 
@@ -156,7 +156,7 @@ const InputSchemaEditor: React.FC<InputSchemaEditorProps> = ({ workflow, onClose
                 key={idx}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="p-4 rounded-xl bg-slate-900/50 border border-slate-700/50 space-y-3"
+                className="p-4 rounded-xl bg-[#0e0e0e]/50 border border-white/[0.06] space-y-3"
               >
                 <div className="flex items-start gap-3">
                   {/* Field name */}
@@ -166,7 +166,7 @@ const InputSchemaEditor: React.FC<InputSchemaEditorProps> = ({ workflow, onClose
                       value={field.name}
                       onChange={e => updateField(idx, { name: e.target.value })}
                       placeholder="field_name"
-                      className="w-full bg-slate-950/50 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-cyan-500/50 transition-colors font-mono"
+                      className="w-full bg-[#080808]/50 border border-white/[0.06] rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-amber-500/50 transition-colors font-mono"
                     />
                   </div>
 
@@ -188,7 +188,7 @@ const InputSchemaEditor: React.FC<InputSchemaEditorProps> = ({ workflow, onClose
                     className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-bold transition-all ${
                       field.required 
                         ? 'text-red-400 bg-red-400/10 border-red-400/20' 
-                        : 'text-slate-500 bg-slate-800/50 border-slate-700'
+                        : 'text-[#525252] bg-[#141414]/50 border-white/[0.06]'
                     }`}
                   >
                     {field.required ? <ToggleRight size={14} /> : <ToggleLeft size={14} />}
@@ -198,7 +198,7 @@ const InputSchemaEditor: React.FC<InputSchemaEditorProps> = ({ workflow, onClose
                   {/* Delete */}
                   <button
                     onClick={() => removeField(idx)}
-                    className="p-2 hover:bg-red-500/10 rounded-lg transition-colors text-slate-600 hover:text-red-500"
+                    className="p-2 hover:bg-red-500/10 rounded-lg transition-colors text-[#525252] hover:text-red-500"
                   >
                     <Trash2 size={14} />
                   </button>
@@ -206,11 +206,11 @@ const InputSchemaEditor: React.FC<InputSchemaEditorProps> = ({ workflow, onClose
 
                 {/* Allowed values (for string type) */}
                 {field.type === 'string' && (
-                  <div className="pl-2 border-l-2 border-slate-800 ml-2">
-                    <p className="text-[10px] text-slate-500 uppercase font-bold mb-2">Allowed Values (optional — creates dropdown)</p>
+                  <div className="pl-2 border-l-2 border-white/[0.06] ml-2">
+                    <p className="text-[10px] text-[#525252] uppercase font-bold mb-2">Allowed Values (optional — creates dropdown)</p>
                     <div className="flex flex-wrap gap-1.5 mb-2">
                       {(field.allowed_values || []).map((val, vIdx) => (
-                        <span key={vIdx} className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 text-[10px] font-bold border border-cyan-500/20">
+                        <span key={vIdx} className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 text-[10px] font-bold border border-amber-500/20">
                           <Tag size={8} /> {val}
                           <X size={8} className="cursor-pointer hover:text-red-400 transition-colors" onClick={() => removeAllowedValue(idx, vIdx)} />
                         </span>
@@ -223,9 +223,9 @@ const InputSchemaEditor: React.FC<InputSchemaEditorProps> = ({ workflow, onClose
                         onChange={e => setNewAllowedValue({ ...newAllowedValue, [idx]: e.target.value })}
                         onKeyDown={e => e.key === 'Enter' && addAllowedValue(idx)}
                         placeholder="Add value..."
-                        className="flex-1 bg-slate-950/50 border border-slate-800 rounded-lg px-2 py-1 text-xs text-white outline-none focus:border-cyan-500/50 transition-colors"
+                        className="flex-1 bg-[#080808]/50 border border-white/[0.06] rounded-lg px-2 py-1 text-xs text-white outline-none focus:border-amber-500/50 transition-colors"
                       />
-                      <button onClick={() => addAllowedValue(idx)} className="p-1 rounded-lg bg-slate-800 text-slate-400 hover:text-cyan-400 transition-colors">
+                      <button onClick={() => addAllowedValue(idx)} className="p-1 rounded-lg bg-[#141414] text-[#a1a1a1] hover:text-amber-400 transition-colors">
                         <Plus size={12} />
                       </button>
                     </div>
@@ -236,15 +236,15 @@ const InputSchemaEditor: React.FC<InputSchemaEditorProps> = ({ workflow, onClose
           </div>
 
           {/* Footer */}
-          <div className="p-6 border-t border-slate-700/50 flex items-center justify-between">
+          <div className="p-6 border-t border-white/[0.06] flex items-center justify-between">
             <button
               onClick={addField}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 hover:bg-slate-700 transition-all text-xs font-bold"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#141414] border border-white/[0.06] text-[#fafafa] hover:bg-slate-700 transition-all text-xs font-bold"
             >
               <Plus size={14} /> Add Field
             </button>
             <div className="flex items-center gap-3">
-              <span className="text-xs text-slate-500">{fields.length} field{fields.length !== 1 ? 's' : ''}</span>
+              <span className="text-xs text-[#525252]">{fields.length} field{fields.length !== 1 ? 's' : ''}</span>
               <button
                 onClick={handleSave}
                 disabled={isSaving}
@@ -261,3 +261,4 @@ const InputSchemaEditor: React.FC<InputSchemaEditorProps> = ({ workflow, onClose
 };
 
 export default InputSchemaEditor;
+

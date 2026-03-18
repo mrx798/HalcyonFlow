@@ -6,3 +6,4 @@ public class RuleEvaluationException extends RuntimeException {
         super(message);
     }
 }
+

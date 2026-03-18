@@ -44,20 +44,20 @@ const NotificationsPage: React.FC = () => {
     switch (type) {
       case 'APPROVAL_REQUEST': return <UserCheck className="w-5 h-5 text-amber-500" />;
       case 'SUCCESS': return <CheckCircle2 className="w-5 h-5 text-emerald-500" />;
-      default: return <Bell className="w-5 h-5 text-cyan-500" />;
+      default: return <Bell className="w-5 h-5 text-amber-500" />;
     }
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
+    <div className="max-w-4xl mx-auto space-y-8 pb-12">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white">Notifications</h1>
-          <p className="text-slate-400 mt-1">Stay updated on your workflow events.</p>
+          <h1 className="text-3xl font-semibold text-[#fafafa] tracking-tight">Notifications</h1>
+          <p className="text-[#a1a1a1] mt-1 font-mono text-sm">Stay updated on your workflow events.</p>
         </div>
         <button 
           onClick={() => markAllRead.mutate()}
-          className="text-xs font-bold text-cyan-500 hover:text-cyan-400 p-2 hover:bg-cyan-500/10 rounded-lg transition-all"
+          className="text-[10px] font-bold tracking-widest uppercase text-amber-500 hover:text-amber-400 p-2 hover:bg-amber-500/10 rounded-lg transition-all"
         >
           MARK ALL AS READ
         </button>
@@ -77,28 +77,28 @@ const NotificationsPage: React.FC = () => {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ delay: index * 0.05 }}
-                className={`glass-card p-6 flex gap-6 group hover:border-slate-600 transition-all ${!notif.read ? 'border-l-4 border-l-cyan-500' : ''}`}
+                className={`glass-card p-6 flex gap-6 group transition-all ${!notif.read ? 'border-l-4 border-l-amber-500 border-white/[0.10]' : 'hover:border-white/[0.10]'}`}
               >
-                <div className={`p-3 rounded-2xl ${notif.read ? 'bg-slate-800 text-slate-500' : 'bg-slate-800 text-cyan-500 animate-pulse'}`}>
+                <div className={`p-3 rounded-2xl flex items-center justify-center h-fit ${notif.read ? 'bg-[#080808] text-[#525252]' : 'bg-amber-500/10 text-amber-500'}`}>
                   {getIcon(notif.type)}
                 </div>
                 <div className="flex-1">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[10px] font-bold text-[#525252] uppercase tracking-widest">
                       {notif.type.replace('_', ' ')}
                     </span>
-                    <span className="text-[10px] text-slate-600 font-medium flex items-center gap-1.5">
+                    <span className="text-[10px] text-[#525252] font-mono flex items-center gap-1.5">
                       <Clock size={10} /> {new Date(notif.createdAt).toLocaleString()}
                     </span>
                   </div>
-                  <p className={`text-sm ${notif.read ? 'text-slate-400' : 'text-slate-200 font-medium'}`}>
+                  <p className={`text-sm tracking-wide ${notif.read ? 'text-[#a1a1a1]' : 'text-[#fafafa] font-medium'}`}>
                     {notif.message}
                   </p>
                 </div>
                 {!notif.read && (
                   <button 
                     onClick={() => markRead.mutate(notif.id)}
-                    className="self-center p-2 rounded-full bg-slate-800 border border-slate-700 text-slate-400 hover:text-cyan-400 hover:border-cyan-500/40 transition-all"
+                    className="self-center p-2 rounded-xl bg-[#080808] border border-white/[0.04] text-[#a1a1a1] hover:text-emerald-400 hover:border-emerald-500/40 transition-all hover:bg-emerald-500/10"
                   >
                     <Check size={16} />
                   </button>
@@ -106,9 +106,9 @@ const NotificationsPage: React.FC = () => {
               </motion.div>
             ))
           ) : (
-            <div className="text-center py-20 bg-slate-800/10 rounded-3xl border border-dashed border-slate-800">
-              <Mail className="w-16 h-16 text-slate-800 mx-auto mb-4" />
-              <p className="text-slate-600">You're all caught up!</p>
+            <div className="text-center py-20 bg-white/[0.02] rounded-3xl border border-dashed border-white/[0.06]">
+              <Mail className="w-16 h-16 text-[#3a3a3a] mx-auto mb-4" />
+              <p className="text-[#a1a1a1] font-medium tracking-wide">You're all caught up!</p>
             </div>
           )}
         </AnimatePresence>
@@ -118,3 +118,4 @@ const NotificationsPage: React.FC = () => {
 };
 
 export default NotificationsPage;
+

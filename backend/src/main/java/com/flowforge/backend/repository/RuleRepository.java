@@ -28,3 +28,4 @@ public interface RuleRepository extends JpaRepository<Rule, UUID> {
 
     Integer countByStepId(UUID stepId);
 }
+

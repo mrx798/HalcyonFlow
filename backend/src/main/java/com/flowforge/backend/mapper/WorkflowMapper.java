@@ -26,3 +26,4 @@ public interface WorkflowMapper {
     @Mapping(target = "updatedAt", ignore = true)
     void updateEntity(WorkflowRequest request, @MappingTarget Workflow entity);
 }
+

@@ -217,7 +217,7 @@ public class ExecutionService {
                 execution.setStatus(ExecutionStatus.PAUSED);
                 execution = executionRepository.save(execution);
                 log.info("Execution {} paused at step '{}' for approval", executionId, currentStep.getName());
-                return; // Pause execution — will resume after approval
+                return; // Pause execution â€” will resume after approval
             }
 
             if ("FAILED".equals(stepResult.status())) {
@@ -227,7 +227,7 @@ public class ExecutionService {
                 return;
             }
 
-            // Step completed — evaluate rules to determine next step
+            // Step completed â€” evaluate rules to determine next step
             List<Rule> rules = currentStep.getRules();
             RuleEngine.RuleEvaluationResult ruleResult = ruleEngine.evaluate(rules, execution.getInputData());
 
@@ -260,9 +260,9 @@ public class ExecutionService {
             logEntry.put("evaluated_rules", evaluatedRules);
 
             if (!ruleResult.matched()) {
-                // No matching rule — check if step has any rules at all
+                // No matching rule â€” check if step has any rules at all
                 if (rules == null || rules.isEmpty()) {
-                    // No rules defined — workflow complete after this step
+                    // No rules defined â€” workflow complete after this step
                     logEntry.put("selected_next_step", null);
                     execution.getLogs().add(logEntry);
                     completeExecution(execution);
@@ -286,7 +286,7 @@ public class ExecutionService {
             execution = executionRepository.save(execution);
 
             if (nextStepId == null) {
-                // No next step — workflow complete
+                // No next step â€” workflow complete
                 completeExecution(execution);
                 return;
             }
@@ -399,7 +399,7 @@ public class ExecutionService {
                 completeExecution(execution);
             }
         } else {
-            // Rejected — fail the execution
+            // Rejected â€” fail the execution
             execution.setStatus(ExecutionStatus.FAILED);
             execution.setErrorMessage("Step rejected by " + approver.getName() +
                     (request.getComment() != null ? ": " + request.getComment() : ""));
@@ -588,7 +588,7 @@ public class ExecutionService {
         return trends;
     }
 
-    // ──────── Private helpers ────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€ Private helpers â”€â”€â”€â”€â”€â”€â”€â”€
 
     private void failExecution(Execution execution, String errorMessage) {
         execution.setStatus(ExecutionStatus.FAILED);
@@ -693,3 +693,4 @@ public class ExecutionService {
                 .build();
     }
 }
+

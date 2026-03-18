@@ -28,3 +28,4 @@ public class AuthResponse {
     private UserRole role;
     private long expiresIn;
 }
+

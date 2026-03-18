@@ -25,3 +25,4 @@ public class NotificationResponse {
     private Boolean isRead;
     private LocalDateTime createdAt;
 }
+

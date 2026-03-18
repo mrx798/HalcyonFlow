@@ -23,8 +23,10 @@ public class AsyncConfig {
         executor.setCorePoolSize(appProperties.getAsync().getCorePoolSize());
         executor.setMaxPoolSize(appProperties.getAsync().getMaxPoolSize());
         executor.setQueueCapacity(appProperties.getAsync().getQueueCapacity());
-        executor.setThreadNamePrefix("FlowForge-Async-");
+        executor.setThreadNamePrefix("HalcyonFlow-Async-");
         executor.initialize();
         return executor;
     }
 }
+
+

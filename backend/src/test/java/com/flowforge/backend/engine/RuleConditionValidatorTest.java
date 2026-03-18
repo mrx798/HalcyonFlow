@@ -60,3 +60,4 @@ class RuleConditionValidatorTest {
         assertEquals("Valid DEFAULT condition", result.errorMessage());
     }
 }
+

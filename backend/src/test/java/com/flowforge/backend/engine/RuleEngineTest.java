@@ -262,7 +262,7 @@ class RuleEngineTest {
 
     @Test
     void testUserCase7_DefaultSelected() {
-        // Test 7: Rule selection — first rule false, DEFAULT selected
+        // Test 7: Rule selection â€” first rule false, DEFAULT selected
         // rules: [
         //   {priority: 1, condition: "amount > 100", nextStepId: "step-A"},
         //   {priority: 99, condition: "DEFAULT", nextStepId: "step-B"}
@@ -281,7 +281,7 @@ class RuleEngineTest {
 
     @Test
     void testUserCase8_FirstRuleSelected() {
-        // Test 8: Rule selection — first rule true, selected
+        // Test 8: Rule selection â€” first rule true, selected
         // rules: [
         //   {priority: 1, condition: "amount > 100", nextStepId: "step-A"},
         //   {priority: 99, condition: "DEFAULT", nextStepId: "step-B"}
@@ -298,3 +298,4 @@ class RuleEngineTest {
         assertEquals(r1.getNextStepId(), result.nextStepId());
     }
 }
+

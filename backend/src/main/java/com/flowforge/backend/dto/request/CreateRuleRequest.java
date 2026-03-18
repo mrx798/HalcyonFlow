@@ -28,3 +28,4 @@ public class CreateRuleRequest {
     @Builder.Default
     private Boolean isDefault = false;
 }
+

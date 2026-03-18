@@ -7,3 +7,4 @@ public enum NotificationType {
     APPROVAL_REQUIRED,
     STEP_COMPLETED
 }
+

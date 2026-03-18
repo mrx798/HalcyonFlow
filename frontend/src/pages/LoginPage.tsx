@@ -51,91 +51,107 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden">
-      {/* Background Orbs */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-cyan-500/10 rounded-full blur-[120px]" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-500/10 rounded-full blur-[120px]" />
-
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-md"
-      >
-        <div className="text-center mb-8">
-          <motion.div
-            initial={{ scale: 0.8 }}
-            animate={{ scale: 1 }}
-            className="inline-flex items-center justify-center w-16 h-16 bg-cyan-600/20 rounded-2xl border border-cyan-500/30 mb-4"
-          >
-            <LogIn className="w-8 h-8 text-cyan-500" />
-          </motion.div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
-            FlowForge
-          </h1>
-          <p className="text-slate-400 mt-2">Sign in to your account</p>
+    <div className="min-h-screen flex bg-[#080808]">
+      {/* Left panel (40% width) */}
+      <div className="hidden lg:flex flex-col justify-between w-[40%] bg-[#0a0a0a] p-12 border-r border-white/[0.06] relative">
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none mix-blend-overlay"></div>
+        
+        {/* Top: Logo */}
+        <div className="flex items-center gap-3 relative z-10">
+          <div className="text-amber-400 text-2xl">⚡</div>
+          <span className="text-[#fafafa] font-semibold text-2xl tracking-tight">HalcyonFlow</span>
         </div>
 
-        <div className="glass-card p-8">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-300 flex items-center gap-2">
-                <Mail className="w-4 h-4" /> Email Address
-              </label>
-              <input
-                {...register('email')}
-                type="email"
-                placeholder="name@company.com"
-                className={`w-full input-field ${errors.email ? 'border-red-500' : ''}`}
-              />
-              {errors.email && (
-                <p className="text-xs text-red-500 mt-1">{errors.email.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-300 flex items-center gap-2">
-                <Lock className="w-4 h-4" /> Password
-              </label>
-              <input
-                {...register('password')}
-                type="password"
-                placeholder="••••••••"
-                className={`w-full input-field ${errors.password ? 'border-red-500' : ''}`}
-              />
-              {errors.password && (
-                <p className="text-xs text-red-500 mt-1">{errors.password.message}</p>
-              )}
-            </div>
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full btn-primary flex items-center justify-center gap-2 group"
-            >
-              {isLoading ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                <>
-                  Sign In
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </>
-              )}
-            </button>
-          </form>
-
-          <div className="mt-8 pt-6 border-t border-slate-700/50 text-center">
-            <p className="text-slate-400 text-sm">
-              Don't have an account?{' '}
-              <Link to="/register" className="text-cyan-500 hover:text-cyan-400 font-medium hover:underline transition-colors">
-                Create one now
-              </Link>
-            </p>
+        {/* Middle: Tagline and features */}
+        <div className="relative z-10">
+          <h1 className="text-[#fafafa] text-4xl font-bold tracking-tight leading-tight mb-8">
+            Automate your business.<br />Without limits.
+          </h1>
+          <div className="flex flex-wrap gap-3">
+            <span className="bg-white/5 border border-white/10 rounded-full px-3 py-1 text-xs text-[#a1a1a1]">⚡ Rule Engine</span>
+            <span className="bg-white/5 border border-white/10 rounded-full px-3 py-1 text-xs text-[#a1a1a1]">🔄 Visual Builder</span>
+            <span className="bg-white/5 border border-white/10 rounded-full px-3 py-1 text-xs text-[#a1a1a1]">📊 Real-time Logs</span>
           </div>
         </div>
-      </motion.div>
+
+        {/* Bottom: Quote */}
+        <div className="relative z-10">
+          <p className="text-[#525252] text-sm italic">"Built for teams who move fast"</p>
+        </div>
+      </div>
+
+      {/* Right panel (60% width) */}
+      <div className="w-full lg:w-[60%] flex items-center justify-center p-8 bg-[#080808]">
+        <motion.div
+           initial={{ opacity: 0, y: 10 }}
+           animate={{ opacity: 1, y: 0 }}
+           transition={{ duration: 0.3 }}
+           className="w-full max-w-sm"
+        >
+          <div className="bg-[#0e0e0e] border border-white/[0.08] rounded-2xl p-8 w-full max-w-sm shadow-2xl">
+            <h2 className="text-[#fafafa] text-xl font-semibold tracking-tight mb-6">Sign in to your account</h2>
+            
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+              <div>
+                <label className="block text-[#a1a1a1] text-xs font-medium uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                  Email Address
+                </label>
+                <input
+                  {...register('email')}
+                  type="email"
+                  placeholder="name@company.com"
+                  className={`bg-[#141414] border border-white/[0.10] rounded-lg px-4 py-2.5 text-[#fafafa] text-sm placeholder-[#525252] focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/30 outline-none transition-all duration-150 w-full ${errors.email ? '!border-red-500/60 !ring-red-500/30' : ''}`}
+                />
+                {errors.email && (
+                  <p className="text-[10px] text-red-500 mt-1.5">{errors.email.message}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-[#a1a1a1] text-xs font-medium uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                  Password
+                </label>
+                <input
+                  {...register('password')}
+                  type="password"
+                  placeholder="••••••••"
+                  className={`bg-[#141414] border border-white/[0.10] rounded-lg px-4 py-2.5 text-[#fafafa] text-sm placeholder-[#525252] focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/30 outline-none transition-all duration-150 w-full ${errors.password ? '!border-red-500/60 !ring-red-500/30' : ''}`}
+                />
+                {errors.password && (
+                  <p className="text-[10px] text-red-500 mt-1.5">{errors.password.message}</p>
+                )}
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-black font-semibold py-2.5 rounded-lg w-full transition-all duration-150 text-sm mt-2 flex items-center justify-center gap-2"
+              >
+                {isLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    Sign In
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+              </button>
+            </form>
+
+            <div className="mt-6 text-center">
+              <p className="text-[#525252] text-sm">
+                Don't have an account?{' '}
+                <Link to="/register" className="text-amber-400 hover:text-amber-300 transition-colors">
+                  Create one now
+                </Link>
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      </div>
     </div>
   );
 };
 
 export default LoginPage;
+

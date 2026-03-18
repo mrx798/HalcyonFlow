@@ -19,3 +19,4 @@ public class ApproveStepRequest {
 
     private String comment;
 }
+

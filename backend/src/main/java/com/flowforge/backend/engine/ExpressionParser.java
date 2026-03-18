@@ -52,7 +52,7 @@ public class ExpressionParser {
             expr = expr.substring(1, expr.length() - 1).trim();
         }
 
-        // 1. Handle OR (||) — lowest precedence
+        // 1. Handle OR (||) â€” lowest precedence
         int orIndex = findTopLevelOperator(expr, "||");
         if (orIndex >= 0) {
             String left = expr.substring(0, orIndex).trim();
@@ -151,10 +151,10 @@ public class ExpressionParser {
             if (token.contains(".")) return Double.parseDouble(token);
             return Long.parseLong(token);
         } catch (NumberFormatException ignored) {
-            // Not a number — treat as field name
+            // Not a number â€” treat as field name
         }
 
-        // Field reference — look up in data
+        // Field reference â€” look up in data
         return data.get(token);
     }
 
@@ -247,3 +247,4 @@ public class ExpressionParser {
         return -1;
     }
 }
+

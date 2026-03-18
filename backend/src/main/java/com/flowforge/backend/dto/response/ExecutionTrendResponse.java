@@ -16,3 +16,4 @@ public class ExecutionTrendResponse {
     private long successCount;
     private long failedCount;
 }
+

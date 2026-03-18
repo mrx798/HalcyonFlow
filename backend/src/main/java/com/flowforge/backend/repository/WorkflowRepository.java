@@ -24,3 +24,4 @@ public interface WorkflowRepository extends JpaRepository<Workflow, UUID> {
     
     boolean existsByIdAndCreatedById(UUID id, UUID userId);
 }
+

@@ -17,12 +17,14 @@ import org.springframework.context.annotation.Configuration;
 public class OpenApiConfig {
 
     @Bean
-    public OpenAPI flowForgeOpenAPI() {
+    public OpenAPI HalcyonFlowOpenAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("FlowForge API")
+                        .title("HalcyonFlow API")
                         .description("Workflow Automation Platform API")
                         .version("1.0.0")
                 );
     }
 }
+
+

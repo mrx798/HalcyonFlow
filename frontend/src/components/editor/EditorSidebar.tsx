@@ -125,20 +125,20 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
   const data = selectedNode.data;
 
   return (
-    <div className="w-96 glass border-l border-slate-700/50 h-full flex flex-col">
-      <div className="p-6 border-b border-slate-700/50 flex items-center justify-between">
+    <div className="w-96 glass border-l border-white/[0.06] h-full flex flex-col">
+      <div className="p-6 border-b border-white/[0.06] flex items-center justify-between">
         <h2 className="text-xl font-bold text-white uppercase tracking-tight">Step Configuration</h2>
-        <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-lg transition-colors">
-          <X className="w-5 h-5 text-slate-400" />
+        <button onClick={onClose} className="p-2 hover:bg-[#141414] rounded-lg transition-colors">
+          <X className="w-5 h-5 text-[#a1a1a1]" />
         </button>
       </div>
 
       <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
         <div className="space-y-4">
-          <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">General Info</label>
+          <label className="text-xs font-bold text-[#525252] uppercase tracking-widest">General Info</label>
           <div className="space-y-4">
             <div>
-              <p className="text-sm text-slate-400 mb-1.5">Step Name</p>
+              <p className="text-sm text-[#a1a1a1] mb-1.5">Step Name</p>
               <input 
                 type="text" 
                 value={data.label}
@@ -147,7 +147,7 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
               />
             </div>
             <div>
-              <p className="text-sm text-slate-400 mb-1.5">Step Type</p>
+              <p className="text-sm text-[#a1a1a1] mb-1.5">Step Type</p>
               <select 
                 value={data.type}
                 onChange={(e) => onUpdate(selectedNode.id, { ...data, type: e.target.value })}
@@ -163,17 +163,17 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
 
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Routing Rules</label>
+            <label className="text-xs font-bold text-[#525252] uppercase tracking-widest">Routing Rules</label>
             {!isNewStep && (
-              <button onClick={addRule} className="p-1 px-2 rounded-lg bg-cyan-600/10 text-cyan-500 hover:bg-cyan-600/20 transition-all text-[10px] font-bold flex items-center gap-1">
+              <button onClick={addRule} className="p-1 px-2 rounded-lg bg-amber-600/10 text-amber-500 hover:bg-amber-600/20 transition-all text-[10px] font-bold flex items-center gap-1">
                 <Plus size={10} /> ADD RULE
               </button>
             )}
           </div>
           
           {isNewStep ? (
-            <div className="p-4 rounded-xl border border-dashed border-slate-700 bg-slate-900/50 flex flex-col items-center text-center gap-3">
-              <p className="text-xs text-slate-400">Save this step first to enable routing rules</p>
+            <div className="p-4 rounded-xl border border-dashed border-white/[0.06] bg-[#0e0e0e]/50 flex flex-col items-center text-center gap-3">
+              <p className="text-xs text-[#a1a1a1]">Save this step first to enable routing rules</p>
               <button
                 onClick={() => onSave(selectedNode!.id, data)}
                 className="btn-primary text-xs py-1.5 px-4 flex items-center justify-center gap-2"
@@ -184,11 +184,11 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
           ) : (
           <div className="space-y-3">
             {rules.map((rule, idx) => (
-              <div key={rule.id} className={`p-4 rounded-xl border space-y-3 ${rule.isDefault ? 'bg-slate-900/50 border-slate-700/50 border-dashed' : 'bg-slate-900/50 border-slate-700'}`}>
+              <div key={rule.id} className={`p-4 rounded-xl border space-y-3 ${rule.isDefault ? 'bg-[#0e0e0e]/50 border-white/[0.06] border-dashed' : 'bg-[#0e0e0e]/50 border-white/[0.06]'}`}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="w-5 h-5 rounded-full bg-slate-800 text-[9px] text-slate-400 font-bold flex items-center justify-center">{idx + 1}</span>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${rule.isDefault ? 'text-slate-500 bg-slate-500/10 uppercase' : 'text-cyan-500 bg-cyan-500/10'}`}>
+                    <span className="w-5 h-5 rounded-full bg-[#141414] text-[9px] text-[#a1a1a1] font-bold flex items-center justify-center">{idx + 1}</span>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${rule.isDefault ? 'text-[#525252] bg-slate-500/10 uppercase' : 'text-amber-500 bg-amber-500/10'}`}>
                       {rule.isDefault ? 'Default Fallback' : 'IF CONDITION'}
                     </span>
                   </div>
@@ -196,20 +196,20 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
                     <button
                       onClick={() => moveRule(idx, 'up')}
                       disabled={idx === 0}
-                      className="p-0.5 rounded hover:bg-slate-800 transition-colors disabled:opacity-20"
+                      className="p-0.5 rounded hover:bg-[#141414] transition-colors disabled:opacity-20"
                       title="Move up (higher priority)"
                     >
-                      <ChevronUp size={12} className="text-slate-400" />
+                      <ChevronUp size={12} className="text-[#a1a1a1]" />
                     </button>
                     <button
                       onClick={() => moveRule(idx, 'down')}
                       disabled={idx === rules.length - 1}
-                      className="p-0.5 rounded hover:bg-slate-800 transition-colors disabled:opacity-20"
+                      className="p-0.5 rounded hover:bg-[#141414] transition-colors disabled:opacity-20"
                       title="Move down (lower priority)"
                     >
-                      <ChevronDown size={12} className="text-slate-400" />
+                      <ChevronDown size={12} className="text-[#a1a1a1]" />
                     </button>
-                    <Trash2 onClick={() => deleteRule(rule.id)} className="w-3.5 h-3.5 text-slate-600 hover:text-red-500 cursor-pointer transition-colors ml-1" />
+                    <Trash2 onClick={() => deleteRule(rule.id)} className="w-3.5 h-3.5 text-[#525252] hover:text-red-500 cursor-pointer transition-colors ml-1" />
                   </div>
                 </div>
                 {!rule.isDefault && (
@@ -221,10 +221,10 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
                       newRules[idx].condition = e.target.value;
                       setRules(newRules);
                     }}
-                    className="w-full bg-slate-950/50 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-cyan-500/50 transition-colors"
+                    className="w-full bg-[#080808]/50 border border-white/[0.06] rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-amber-500/50 transition-colors"
                   />
                 )}
-                <div className="flex items-center gap-2 text-[10px] text-slate-400 mt-2">
+                <div className="flex items-center gap-2 text-[10px] text-[#a1a1a1] mt-2">
                   <ArrowRight size={10} /> GOTO STEP:
                   <select 
                     value={rule.nextStepId || ''}
@@ -233,7 +233,7 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
                       newRules[idx].nextStepId = e.target.value || null;
                       setRules(newRules);
                     }}
-                    className="bg-transparent border-none text-slate-200 outline-none p-0 cursor-pointer"
+                    className="bg-transparent border-none text-[#fafafa] outline-none p-0 cursor-pointer"
                   >
                     <option value="">Select a step</option>
                     <option value="__end__">🏁 End Workflow</option>
@@ -252,7 +252,7 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
                 </div>
                 <button
                   onClick={() => saveRule(rules[idx])}
-                  className="w-full mt-2 py-1.5 rounded-lg bg-cyan-600/10 text-cyan-500 hover:bg-cyan-600/20 transition-all text-[10px] font-bold"
+                  className="w-full mt-2 py-1.5 rounded-lg bg-amber-600/10 text-amber-500 hover:bg-amber-600/20 transition-all text-[10px] font-bold"
                 >
                   Save Rule
                 </button>
@@ -263,7 +263,7 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
         </div>
       </div>
 
-      <div className="p-6 border-t border-slate-700/50 grid grid-cols-2 gap-4">
+      <div className="p-6 border-t border-white/[0.06] grid grid-cols-2 gap-4">
         <button 
           onClick={() => onDelete(selectedNode.id)}
           className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-all text-sm font-bold"
@@ -282,3 +282,4 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
 };
 
 export default EditorSidebar;
+

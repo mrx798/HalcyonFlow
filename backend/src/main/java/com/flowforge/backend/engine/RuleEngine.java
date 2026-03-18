@@ -79,13 +79,13 @@ public class RuleEngine {
                     error
             ));
 
-            // Step 4: First TRUE rule wins — return its next step
+            // Step 4: First TRUE rule wins â€” return its next step
             if (result) {
                 return new RuleEvaluationResult(true, rule, rule.getNextStepId(), evalLogs);
             }
         }
 
-        // Step 5: No regular rule matched — use DEFAULT
+        // Step 5: No regular rule matched â€” use DEFAULT
         if (defaultRule != null) {
             evalLogs.add(new RuleEvalLog(
                     defaultRule.getId(),
@@ -122,3 +122,4 @@ public class RuleEngine {
             String error
     ) {}
 }
+

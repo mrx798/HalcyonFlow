@@ -31,3 +31,4 @@ public class RegisterRequest {
 
     private UserRole role;
 }
+

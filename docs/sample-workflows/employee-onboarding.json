@@ -25,7 +25,7 @@
       "name": "HR Document Review",
       "stepType": "APPROVAL",
       "metadata": {
-        "assignee": "hr@flowforge.com",
+        "assignee": "hr@HalcyonFlow.com",
         "instructions": "Please review the signed offer letter and ID proof."
       },
       "rules": [
@@ -55,3 +55,4 @@
     }
   ]
 }
+

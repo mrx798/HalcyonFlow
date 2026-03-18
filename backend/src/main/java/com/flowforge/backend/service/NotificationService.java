@@ -49,7 +49,7 @@ public class NotificationService {
         }
 
         notificationRepository.save(notification);
-        log.info("Notification created for user {} — type: {}, title: '{}'", userId, type, title);
+        log.info("Notification created for user {} â€” type: {}, title: '{}'", userId, type, title);
     }
 
     @Transactional(readOnly = true)
@@ -111,3 +111,4 @@ public class NotificationService {
                 .build();
     }
 }
+

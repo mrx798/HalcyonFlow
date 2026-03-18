@@ -23,3 +23,4 @@ public class UpdateRuleRequest {
 
     private Integer priority;
 }
+

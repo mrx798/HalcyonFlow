@@ -1,8 +1,8 @@
 {
 	"info": {
-		"_postman_id": "flowforge-api-collection",
-		"name": "FlowForge API",
-		"description": "Collection for testing FlowForge Workflow Automation Platform.",
+		"_postman_id": "HalcyonFlow-api-collection",
+		"name": "HalcyonFlow API",
+		"description": "Collection for testing HalcyonFlow Workflow Automation Platform.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -16,7 +16,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"name\": \"Test User\",\n    \"email\": \"test@flowforge.com\",\n    \"password\": \"Password123!\",\n    \"role\": \"USER\"\n}",
+							"raw": "{\n    \"name\": \"Test User\",\n    \"email\": \"test@HalcyonFlow.com\",\n    \"password\": \"Password123!\",\n    \"role\": \"USER\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -47,7 +47,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"email\": \"test@flowforge.com\",\n    \"password\": \"Password123!\"\n}",
+							"raw": "{\n    \"email\": \"test@HalcyonFlow.com\",\n    \"password\": \"Password123!\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -113,3 +113,4 @@
 		}
 	]
 }
+
