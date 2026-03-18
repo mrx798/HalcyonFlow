@@ -1,7 +1,7 @@
 import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/axios';
-import { ApiResponse } from '../types/auth';
+import { ApiResponse } from '../types';
 import { Bell, Check, CheckCircle2, Clock, Mail, UserCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
@@ -70,7 +70,7 @@ const NotificationsPage: React.FC = () => {
               <div key={i} className="glass-card p-6 h-24 animate-pulse" />
             ))
           ) : (notifications || []).length > 0 ? (
-            notifications?.map((notif, index) => (
+            notifications?.map((notif: Notification, index: number) => (
               <motion.div
                 key={notif.id}
                 initial={{ opacity: 0, x: -20 }}

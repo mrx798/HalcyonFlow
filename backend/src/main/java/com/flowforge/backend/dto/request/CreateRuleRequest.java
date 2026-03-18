@@ -17,7 +17,7 @@ import java.util.UUID;
 @Builder
 public class CreateRuleRequest {
 
-    @NotBlank(message = "Condition is required")
+    @NotBlank(message = "A valid rule condition (e.g., 'amount > 100' or 'DEFAULT') must be provided")
     @Size(max = 500, message = "Condition must not exceed 500 characters")
     private String condition;
 

@@ -1,25 +1,38 @@
 package com.flowforge.backend.engine;
 
-import com.flowforge.backend.entity.Execution;
-import com.flowforge.backend.entity.Step;
-import com.flowforge.backend.enums.NotificationType;
-import com.flowforge.backend.enums.StepType;
-import com.flowforge.backend.service.NotificationService;
+import com.flowforge.backend.constants.AppConstants;
+import com.flowforge.backend.dto.*;
+import com.flowforge.backend.dto.request.*;
+import com.flowforge.backend.dto.response.*;
+import com.flowforge.backend.entity.*;
+import com.flowforge.backend.enums.*;
+import com.flowforge.backend.service.*;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
+import com.flowforge.backend.constants.AppConstants;
+
 /**
- * Executes individual steps based on their type (TASK, APPROVAL, NOTIFICATION).
+ * Executes individual workflow steps based on their defined step type.
+ *
+ * <p>Step Type Handlers:</p>
+ *<ul>
+ *  <li><b>TASK:</b> Automated system action. Executes instantly and completes without human intervention.</li>
+ *  <li><b>APPROVAL:</b> Human-in-the-loop action. Pauses execution, generates an approval request, and notifies the assignee or workflow owner.</li>
+ *  <li><b>NOTIFICATION:</b> Alert action. Sends an asynchronous notification to the specified recipient and immediately completes the step.</li>
+ *</ul>
+ *
+ * @author Sharath
+ * @version 1.0
+ * @since 2026
  */
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class StepExecutor {
-
-    private static final Logger log = LoggerFactory.getLogger(StepExecutor.class);
 
     private final NotificationService notificationService;
 
@@ -39,7 +52,7 @@ public class StepExecutor {
 
     private StepExecutionResult executeTask(Step step, Execution execution, Map<String, Object> inputData) {
         log.info("Task step '{}' executed successfully", step.getName());
-        return new StepExecutionResult("COMPLETED", "Task '" + step.getName() + "' completed successfully", false, null);
+        return new StepExecutionResult(AppConstants.STATUS_COMPLETED, "Task '" + step.getName() + "' completed successfully", false, null);
     }
 
     private StepExecutionResult executeApproval(Step step, Execution execution) {
@@ -61,7 +74,7 @@ public class StepExecutor {
             log.info("Approval notification sent to workflow owner for step '{}'", step.getName());
         }
 
-        return new StepExecutionResult("WAITING", "Waiting for approval on step '" + step.getName() + "'", true, assigneeEmail);
+        return new StepExecutionResult(AppConstants.STATUS_WAITING, "Waiting for approval on step '" + step.getName() + "'", true, assigneeEmail);
     }
 
     private StepExecutionResult executeNotification(Step step, Execution execution) {
@@ -82,7 +95,7 @@ public class StepExecutor {
         );
 
         log.info("Notification step '{}' executed successfully", step.getName());
-        return new StepExecutionResult("COMPLETED", "Notification sent for step '" + step.getName() + "'", false, null);
+        return new StepExecutionResult(AppConstants.STATUS_COMPLETED, "Notification sent for step '" + step.getName() + "'", false, null);
     }
 
     /**

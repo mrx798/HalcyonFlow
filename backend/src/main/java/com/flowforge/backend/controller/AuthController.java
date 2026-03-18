@@ -1,14 +1,11 @@
 package com.flowforge.backend.controller;
 
-import com.flowforge.backend.dto.request.ChangePasswordRequest;
-import com.flowforge.backend.dto.request.UpdateProfileRequest;
-import com.flowforge.backend.dto.request.LoginRequest;
-import com.flowforge.backend.dto.request.RefreshTokenRequest;
-import com.flowforge.backend.dto.request.RegisterRequest;
-import com.flowforge.backend.dto.response.ApiResponse;
-import com.flowforge.backend.dto.response.AuthResponse;
-import com.flowforge.backend.dto.response.UserResponse;
-import com.flowforge.backend.service.AuthService;
+import com.flowforge.backend.dto.*;
+import com.flowforge.backend.dto.request.*;
+import com.flowforge.backend.dto.response.*;
+import com.flowforge.backend.security.*;
+import com.flowforge.backend.service.*;
+import lombok.extern.slf4j.Slf4j;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -26,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/auth")
 @Tag(name = "Authentication", description = "Authentication and authorization endpoints")
+@Slf4j
 public class AuthController {
 
     private final AuthService authService;

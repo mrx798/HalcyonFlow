@@ -17,16 +17,16 @@ import lombok.Setter;
 @Builder
 public class RegisterRequest {
 
-    @NotBlank(message = "Name is required")
+    @NotBlank(message = "Please provide your full name")
     @Size(min = 2, max = 100, message = "Name must be between 2 and 100 characters")
     private String name;
 
-    @NotBlank(message = "Email is required")
-    @Email(message = "Invalid email format")
+    @NotBlank(message = "An email address is required to register")
+    @Email(message = "Please provide a valid email address format (e.g., user@example.com)")
     private String email;
 
-    @NotBlank(message = "Password is required")
-    @Size(min = 8, max = 100, message = "Password must be between 8 and 100 characters")
+    @NotBlank(message = "A password is required to secure your account")
+    @Size(min = 8, max = 100, message = "Password must be at least 8 characters long for security")
     private String password;
 
     private UserRole role;

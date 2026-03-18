@@ -1,0 +1,35 @@
+src/components/editor/EditorSidebar.tsx(3,34): error TS2307: Cannot find module '../../types/editor' or its corresponding type declarations.
+src/pages/DashboardPage.tsx(5,29): error TS2307: Cannot find module '../types/auth' or its corresponding type declarations.
+src/pages/DashboardPage.tsx(6,50): error TS2307: Cannot find module '../types/dashboard' or its corresponding type declarations.
+src/pages/ExecuteWorkflowPage.tsx(6,29): error TS2307: Cannot find module '../types/auth' or its corresponding type declarations.
+src/pages/ExecuteWorkflowPage.tsx(88,60): error TS2339: Property 'executionId' does not exist on type 'Execution'.
+src/pages/ExecuteWorkflowPage.tsx(231,40): error TS2339: Property 'status' does not exist on type 'ExecutionLog'.
+src/pages/ExecuteWorkflowPage.tsx(232,40): error TS2339: Property 'status' does not exist on type 'ExecutionLog'.
+src/pages/ExecuteWorkflowPage.tsx(256,204): error TS2339: Property 'startedAt' does not exist on type 'ExecutionLog'.
+src/pages/ExecuteWorkflowPage.tsx(256,226): error TS2339: Property 'started_at' does not exist on type 'ExecutionLog'.
+src/pages/ExecuteWorkflowPage.tsx(256,247): error TS2339: Property 'endedAt' does not exist on type 'ExecutionLog'.
+src/pages/ExecuteWorkflowPage.tsx(256,267): error TS2339: Property 'ended_at' does not exist on type 'ExecutionLog'.
+src/pages/ExecutionViewPage.tsx(83,42): error TS2339: Property 'status' does not exist on type 'ExecutionLog'.
+src/pages/ExecutionViewPage.tsx(84,42): error TS2339: Property 'status' does not exist on type 'ExecutionLog'.
+src/pages/LoginPage.tsx(8,43): error TS2307: Cannot find module '../types/auth' or its corresponding type declarations.
+src/pages/LoginPage.tsx(41,24): error TS2339: Property 'userId' does not exist on type 'AuthResponse'.
+src/pages/NotificationsPage.tsx(4,29): error TS2307: Cannot find module '../types/auth' or its corresponding type declarations.
+src/pages/NotificationsPage.tsx(73,33): error TS7006: Parameter 'notif' implicitly has an 'any' type.
+src/pages/NotificationsPage.tsx(73,40): error TS7006: Parameter 'index' implicitly has an 'any' type.
+src/pages/RegisterPage.tsx(8,43): error TS2307: Cannot find module '../types/auth' or its corresponding type declarations.
+src/pages/RegisterPage.tsx(42,24): error TS2339: Property 'userId' does not exist on type 'AuthResponse'.
+src/pages/WorkflowEditorPage.tsx(771,40): error TS2339: Property 'type' does not exist on type 'Step'.
+src/pages/WorkflowListPage.tsx(4,29): error TS2307: Cannot find module '../types/auth' or its corresponding type declarations.
+src/pages/WorkflowListPage.tsx(5,26): error TS2307: Cannot find module '../types/workflow' or its corresponding type declarations.
+src/pages/WorkflowListPage.tsx(33,105): error TS7053: Element implicitly has an 'any' type because expression of type 'Workflow' can't be used to index type '{ DRAFT: string; ACTIVE: string; ARCHIVED: string; }'.
+src/pages/WorkflowListPage.tsx(68,31): error TS2339: Property 'content' does not exist on type 'Workflow[]'.
+src/pages/WorkflowListPage.tsx(306,29): error TS2339: Property 'totalPages' does not exist on type 'Workflow[]'.
+src/pages/WorkflowListPage.tsx(310,33): error TS2339: Property 'pageable' does not exist on type 'Workflow[]'.
+src/pages/WorkflowListPage.tsx(310,76): error TS2339: Property 'pageable' does not exist on type 'Workflow[]'.
+src/pages/WorkflowListPage.tsx(310,103): error TS2339: Property 'size' does not exist on type 'Workflow[]'.
+src/pages/WorkflowListPage.tsx(310,118): error TS2339: Property 'totalElements' does not exist on type 'Workflow[]'.
+src/pages/WorkflowListPage.tsx(310,147): error TS2339: Property 'totalElements' does not exist on type 'Workflow[]'.
+src/pages/WorkflowListPage.tsx(331,83): error TS2339: Property 'totalPages' does not exist on type 'Workflow[]'.
+src/pages/WorkflowListPage.tsx(334,56): error TS2339: Property 'totalPages' does not exist on type 'Workflow[]'.
+src/pages/WorkflowListPage.tsx(335,42): error TS2339: Property 'totalPages' does not exist on type 'Workflow[]'.
+src/store/useAuthStore.ts(3,22): error TS2307: Cannot find module '../types/auth' or its corresponding type declarations.

@@ -5,6 +5,9 @@ import { stepApi } from '../api/step.api';
 import { ruleApi } from '../api/rule.api';
 import { toast } from 'sonner';
 import { ChevronLeft, Play, Save, Plus, Pencil, Trash2, ChevronUp, ChevronDown, X, GripVertical } from 'lucide-react';
+import { useWorkflow } from '../hooks/useWorkflow';
+import { Workflow, Step, Rule } from '../types';
+import { getErrorMessage } from '../utils/errorHandler';
 
 /* ─────────────────────────────────── STEP BADGES ─────────────────────────────────── */
 const STEP_STYLES: Record<string, { bg: string; label: string }> = {
@@ -18,22 +21,23 @@ const getStyle = (t: string) => STEP_STYLES[t?.toUpperCase()] || STEP_STYLES.TAS
 const WorkflowEditorPage: React.FC = () => {
   const { id: wfId } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { loading: hookLoading, fetchWorkflow, fetchSteps } = useWorkflow();
 
   // ── core data ──
-  const [workflow, setWorkflow] = useState<any>(null);
-  const [steps, setSteps]       = useState<any[]>([]);
+  const [workflow, setWorkflow] = useState<Workflow | null>(null);
+  const [steps, setSteps]       = useState<Step[]>([]);
   const [loading, setLoading]   = useState(true);
   const [error, setError]       = useState<string | null>(null);
 
   // ── selected step & its rules ──
   const [selectedStepId, setSelectedStepId] = useState<string | null>(null);
-  const [rules, setRules] = useState<any[]>([]);
+  const [rules, setRules] = useState<Rule[]>([]);
 
   // ── inline form toggles ──
   const [addingStep, setAddingStep]   = useState(false);
-  const [editStep, setEditStep]       = useState<any>(null);
+  const [editStep, setEditStep]       = useState<Step | null>(null);
   const [addingRule, setAddingRule]    = useState(false);
-  const [editRule, setEditRule]       = useState<any>(null);
+  const [editRule, setEditRule]       = useState<Rule | null>(null);
   const [addingField, setAddingField] = useState(false);
   const [editField, setEditField]     = useState<string | null>(null);
 
@@ -57,6 +61,7 @@ const WorkflowEditorPage: React.FC = () => {
   const [dryRunData, setDryRunData] = useState<Record<string, any>>({});
   const [dryRunResult, setDryRunResult] = useState<any>(null);
   const [simulating, setSimulating] = useState(false);
+
 
   const handleDryRun = async () => {
     if (!wfId) return;
@@ -124,20 +129,18 @@ const WorkflowEditorPage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const [wRes, sRes] = await Promise.all([
-        api.get(`/workflows/${wfId}`),
-        stepApi.getSteps(wfId),
+      const [wData, sData] = await Promise.all([
+        fetchWorkflow(wfId),
+        fetchSteps(wfId),
       ]);
-      setWorkflow(wRes.data.data);
-      setSteps(sRes.data.data || []);
+      setWorkflow(wData);
+      setSteps(sData || []);
     } catch (e: any) {
-      console.error('Failed to load workflow:', e);
-      setError(e.response?.data?.message || 'Failed to load workflow data. It may have been deleted or you may not have permission.');
-      toast.error('Load failed');
+      setError(getErrorMessage(e));
     } finally {
       setLoading(false);
     }
-  }, [wfId]);
+  }, [wfId, fetchWorkflow, fetchSteps]);
 
   const loadRules = useCallback(async (stepId: string) => {
     if (!wfId) return;
@@ -152,16 +155,18 @@ const WorkflowEditorPage: React.FC = () => {
   const saveStep = async () => {
     if (!wfId || !sf.name.trim()) { toast.error('Enter a step name'); return; }
     try {
+      const stepType = sf.stepType as 'TASK' | 'APPROVAL' | 'NOTIFICATION';
       if (editStep) {
-        await stepApi.updateStep(wfId, editStep.id, { name: sf.name, stepType: sf.stepType, metadata: editStep.metadata || {} });
+        await stepApi.updateStep(wfId, editStep.id, { name: sf.name, stepType, metadata: editStep.metadata || {} });
         toast.success('Step updated');
       } else {
-        await stepApi.createStep(wfId, { name: sf.name, stepType: sf.stepType, stepOrder: steps.length + 1 });
+        await stepApi.createStep(wfId, { name: sf.name, stepType, orderIndex: steps.length + 1 });
         toast.success('Step added');
       }
       setAddingStep(false); setEditStep(null); setSf({ name: '', stepType: 'TASK' });
-      const r = await stepApi.getSteps(wfId); setSteps(r.data.data || []);
-    } catch (e: any) { toast.error(e.response?.data?.message || 'Failed'); }
+      const sData = await fetchSteps(wfId);
+      setSteps(sData || []);
+    } catch (e: any) { toast.error(getErrorMessage(e)); }
   };
 
   const deleteStep = async (s: any) => {
@@ -176,10 +181,11 @@ const WorkflowEditorPage: React.FC = () => {
   /* ── rule CRUD ── */
   const saveRule = async () => {
     if (!wfId || !selectedStepId) return;
-    const payload = {
+    const payload: Partial<Rule> = {
       condition: rf.isDefault ? 'DEFAULT' : rf.condition,
-      nextStepId: !rf.nextStepId || rf.nextStepId === '__end__' ? null : rf.nextStepId,
-      priority: rf.priority, isDefault: rf.isDefault,
+      nextStepId: !rf.nextStepId || rf.nextStepId === '__end__' ? undefined : rf.nextStepId,
+      priority: rf.priority,
+      isDefault: rf.isDefault,
     };
     try {
       if (editRule) { await ruleApi.updateRule(wfId, selectedStepId, editRule.id, payload); toast.success('Rule updated'); }
@@ -187,7 +193,7 @@ const WorkflowEditorPage: React.FC = () => {
       setAddingRule(false); setEditRule(null);
       await loadRules(selectedStepId);
       setRf({ priority: rules.length + 2, condition: '', nextStepId: '', isDefault: false });
-    } catch (e: any) { toast.error(e.response?.data?.message || 'Failed'); }
+    } catch (e: any) { toast.error(getErrorMessage(e)); }
   };
 
   const deleteRule = async (id: string) => {
@@ -266,18 +272,25 @@ const WorkflowEditorPage: React.FC = () => {
   const avgTime = workflow?.averageDuration || '0s';
 
   const handleNameSave = async () => {
-    if (!tempName.trim()) { setEditingName(false); return; }
-    await putSchema(workflow.inputSchema); // we cheat and use putSchema which also sends workflow name
+    if (!tempName.trim() || !workflow) { setEditingName(false); return; }
+    await _putSchemaCustom(workflow.inputSchema, tempName);
     setEditingName(false);
   };
   
   // Custom putSchema that respects updated name
-  const _putSchemaCustom = async (s: any, newName: string = workflow.name) => {
+  const _putSchemaCustom = async (s: any, newName: string = workflow?.name || '') => {
     if (!wfId || !workflow) return;
     try {
-      await api.put(`/workflows/${wfId}`, { name: newName, description: workflow.description || '', status: workflow.status, inputSchema: s });
-      const r = await api.get(`/workflows/${wfId}`); setWorkflow(r.data.data); toast.success('Saved');
-    } catch (e: any) { toast.error(e.response?.data?.message || 'Failed'); }
+      await api.put(`/workflows/${wfId}`, { 
+        name: newName, 
+        description: workflow.description || '', 
+        status: workflow.status, 
+        inputSchema: s 
+      });
+      const wData = await fetchWorkflow(wfId);
+      setWorkflow(wData);
+      toast.success('Saved');
+    } catch (e: any) { toast.error(getErrorMessage(e)); }
   };
 
 
@@ -553,7 +566,7 @@ const WorkflowEditorPage: React.FC = () => {
                 )}
                 {rules.map((r: any, i: number) => {
                   const next = steps.find(s => s.id === r.nextStepId);
-                  const st = next ? getStyle(next.type || next.stepType) : null;
+                  const st = next ? getStyle(next.stepType) : null;
                   return (
                     <tr key={r.id} className="hover:bg-white/[0.02] group transition-colors">
                       <td className="px-5 py-3.5 text-[#525252] font-mono text-center text-xs">{i + 1}</td>
@@ -755,7 +768,7 @@ const WorkflowEditorPage: React.FC = () => {
            
            <div className="flex flex-col items-center justify-center space-y-0 text-center w-full relative z-10">
                {steps.map((s, idx) => {
-                 const st = getStyle(s.type || s.stepType);
+                 const st = getStyle((s as any).type || s.stepType);
                  return (
                    <React.Fragment key={s.id}>
                      <div className={`px-4 py-2 border rounded-lg shadow-xl ${st.bg} inline-block min-w-[200px] bg-[#0e0e0e]`}>

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { workflowApi } from '../api/workflow.api';
-import { ApiResponse } from '../types/auth';
-import { Workflow } from '../types/workflow';
+import { ApiResponse } from '../types';
+import { Workflow } from '../types';
 import { 
   Plus, 
   Search, 

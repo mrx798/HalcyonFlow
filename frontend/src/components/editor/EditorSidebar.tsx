@@ -1,6 +1,6 @@
 import React from 'react';
 import { Node } from 'reactflow';
-import { WorkflowNodeData } from '../../types/editor';
+import { WorkflowNodeData } from '../../types';
 import { X, Save, Trash2, Plus, ArrowRight, ChevronUp, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 

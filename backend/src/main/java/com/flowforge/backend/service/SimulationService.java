@@ -1,12 +1,13 @@
 package com.flowforge.backend.service;
 
-import com.flowforge.backend.dto.SimulationResponse;
+import com.flowforge.backend.dto.*;
 import com.flowforge.backend.entity.Step;
 import com.flowforge.backend.entity.Workflow;
 import com.flowforge.backend.engine.RuleEngine;
 import com.flowforge.backend.repository.WorkflowRepository;
 import com.flowforge.backend.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,8 +18,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+/**
+ * Service responsible for simulating workflow executions.
+ * Provides a sandbox environment to test workflow logic and routing
+ * without persisting actual execution data or triggering side effects.
+ */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class SimulationService {
 
     private final WorkflowRepository workflowRepository;

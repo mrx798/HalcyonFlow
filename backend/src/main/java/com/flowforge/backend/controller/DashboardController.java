@@ -1,9 +1,11 @@
 package com.flowforge.backend.controller;
 
-import com.flowforge.backend.dto.response.ApiResponse;
-import com.flowforge.backend.dto.response.DashboardStatsResponse;
+import com.flowforge.backend.dto.*;
+import com.flowforge.backend.dto.request.*;
+import com.flowforge.backend.dto.response.*;
 import com.flowforge.backend.security.SecurityUtils;
-import com.flowforge.backend.service.ExecutionService;
+import com.flowforge.backend.service.*;
+import lombok.extern.slf4j.Slf4j;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -21,6 +23,7 @@ import java.util.UUID;
 @Tag(name = "Dashboard", description = "Dashboard statistics endpoints")
 @SecurityRequirement(name = "bearerAuth")
 @SuppressWarnings("null")
+@Slf4j
 public class DashboardController {
 
     private final ExecutionService executionService;

@@ -1,27 +1,29 @@
 package com.flowforge.backend.service;
 
-import com.flowforge.backend.dto.request.CreateStepRequest;
-import com.flowforge.backend.dto.request.ReorderStepsRequest;
-import com.flowforge.backend.dto.request.UpdateStepRequest;
-import com.flowforge.backend.dto.response.StepDetailResponse;
-import com.flowforge.backend.dto.response.StepResponse;
-import com.flowforge.backend.entity.Step;
-import com.flowforge.backend.entity.Workflow;
-import com.flowforge.backend.exception.ResourceNotFoundException;
-import com.flowforge.backend.mapper.StepMapper;
-import com.flowforge.backend.repository.StepRepository;
-import com.flowforge.backend.repository.WorkflowRepository;
+import com.flowforge.backend.dto.request.*;
+import com.flowforge.backend.dto.response.*;
+import com.flowforge.backend.entity.*;
+import com.flowforge.backend.exception.*;
+import com.flowforge.backend.mapper.*;
+import com.flowforge.backend.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+/**
+ * Service responsible for managing workflow steps.
+ * Handles the creation, modification, deletion, and sequential reordering
+ * of steps within a specific workflow definition.
+ */
 @Service
 @RequiredArgsConstructor
 @SuppressWarnings("null")
+@Slf4j
 public class StepService {
 
     private final StepRepository stepRepository;
@@ -30,6 +32,7 @@ public class StepService {
 
     @Transactional
     public StepResponse createStep(CreateStepRequest request, UUID userId) {
+        log.info("Creating new step '{}' for workflow {}", request.getName(), request.getWorkflowId());
         Workflow workflow = getWorkflowForUser(request.getWorkflowId(), userId);
 
         // Determine step order
@@ -93,6 +96,7 @@ public class StepService {
 
     @Transactional
     public void deleteStep(UUID stepId, UUID workflowId, UUID userId) {
+        log.info("Deleting step {} from workflow {}", stepId, workflowId);
         Workflow workflow = getWorkflowForUser(workflowId, userId);
 
         Step step = stepRepository.findByIdAndWorkflowId(stepId, workflowId)

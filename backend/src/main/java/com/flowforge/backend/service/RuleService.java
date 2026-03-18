@@ -1,29 +1,32 @@
 package com.flowforge.backend.service;
 
-import com.flowforge.backend.dto.request.CreateRuleRequest;
-import com.flowforge.backend.dto.request.ReorderRulesRequest;
-import com.flowforge.backend.dto.request.UpdateRuleRequest;
-import com.flowforge.backend.dto.response.RuleResponse;
-import com.flowforge.backend.engine.RuleConditionValidator;
-import com.flowforge.backend.entity.Rule;
-import com.flowforge.backend.entity.Step;
-import com.flowforge.backend.entity.Workflow;
-import com.flowforge.backend.exception.ResourceNotFoundException;
-import com.flowforge.backend.mapper.RuleMapper;
-import com.flowforge.backend.repository.RuleRepository;
-import com.flowforge.backend.repository.StepRepository;
+import com.flowforge.backend.dto.request.*;
+import com.flowforge.backend.dto.response.*;
+import com.flowforge.backend.engine.*;
+import com.flowforge.backend.entity.*;
+import com.flowforge.backend.exception.*;
+import com.flowforge.backend.mapper.*;
+import com.flowforge.backend.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import com.flowforge.backend.constants.AppConstants;
 
+/**
+ * Service responsible for managing routing rules within workflow steps.
+ * Validates rule conditions, handles creation and priority ordering,
+ * and ensures each step maintains a valid DEFAULT fallback rule.
+ */
 @Service
 @RequiredArgsConstructor
 @SuppressWarnings("null")
+@Slf4j
 public class RuleService {
 
     private final RuleRepository ruleRepository;
@@ -32,6 +35,7 @@ public class RuleService {
 
     @Transactional
     public RuleResponse createRule(UUID stepId, CreateRuleRequest request, UUID userId) {
+        log.info("Creating rule for step {} by user {}", stepId, userId);
         // FIX 1: Null check on step
         Step step = stepRepository.findById(stepId)
             .orElseThrow(() -> new ResourceNotFoundException("Step", "id", stepId.toString()));
@@ -48,7 +52,7 @@ public class RuleService {
         // FIX 4: Handle DEFAULT condition
         String condition = request.getCondition();
         if (isDefault) {
-            condition = "DEFAULT";
+            condition = AppConstants.RULE_DEFAULT;
         }
         
         // FIX 5: Validate condition (wrap in try-catch)
@@ -119,7 +123,7 @@ public class RuleService {
 
         // Cannot change a DEFAULT rule's condition away from "DEFAULT"
         if (Boolean.TRUE.equals(rule.getIsDefault()) && request.getCondition() != null
-                && !"DEFAULT".equals(request.getCondition())) {
+                && !AppConstants.RULE_DEFAULT.equals(request.getCondition())) {
             throw new RuntimeException("Cannot change a DEFAULT rule's condition. Delete and recreate instead.");
         }
 

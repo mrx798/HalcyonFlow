@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import api from '../api/axios';
 import { executionApi } from '../api/execution.api';
-import { ApiResponse } from '../types/auth';
+import { ApiResponse } from '../types';
 import { toast } from 'sonner';
 import { ChevronLeft } from 'lucide-react';
 
@@ -85,7 +85,7 @@ const ExecuteWorkflowPage: React.FC = () => {
     setIsExecuting(true);
     try {
       const res = await executionApi.startExecution(id!, { inputData: formData });
-      const execId = res.data?.data?.id || res.data?.data?.executionId;
+      const execId = res.data?.data?.id;
       if (execId) {
         setExecutionId(execId);
         setStage('progress');
@@ -253,7 +253,7 @@ const ExecuteWorkflowPage: React.FC = () => {
                     </span>
                     
                     <span className="text-[10px] font-mono tracking-widest font-bold uppercase">
-                       {isDone && <span className="flex items-center gap-4"><span className="text-emerald-500/70">COMPLETED</span> <span className="text-[#525252] w-16 text-right">{calcDuration(logEntry.startedAt || logEntry.started_at, logEntry.endedAt || logEntry.ended_at)}</span></span>}
+                       {isDone && <span className="flex items-center gap-4"><span className="text-emerald-500/70">COMPLETED</span> <span className="text-[#525252] w-16 text-right">{calcDuration(logEntry.startedAt || logEntry.started_at || '', logEntry.endedAt || logEntry.ended_at || '')}</span></span>}
                        {isCurrent && <span className="text-amber-500 flex items-center gap-2">IN PROGRESS <span className="text-amber-500/50 mt-[-2px] tracking-tighter">████░░░</span> <span className="text-[#525252]">WAITING</span></span>}
                        {isPending && <span className="text-[#3a3a3a]">PENDING</span>}
                        {isFail && <span className="text-red-500">FAILED</span>}

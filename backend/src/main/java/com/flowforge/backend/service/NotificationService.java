@@ -1,17 +1,14 @@
 package com.flowforge.backend.service;
 
-import com.flowforge.backend.dto.response.NotificationResponse;
-import com.flowforge.backend.entity.Execution;
-import com.flowforge.backend.entity.Notification;
-import com.flowforge.backend.entity.Step;
-import com.flowforge.backend.entity.User;
-import com.flowforge.backend.enums.NotificationType;
-import com.flowforge.backend.exception.ResourceNotFoundException;
-import com.flowforge.backend.repository.NotificationRepository;
-import com.flowforge.backend.repository.UserRepository;
+import com.flowforge.backend.dto.*;
+import com.flowforge.backend.dto.request.*;
+import com.flowforge.backend.dto.response.*;
+import com.flowforge.backend.entity.*;
+import com.flowforge.backend.enums.*;
+import com.flowforge.backend.exception.*;
+import com.flowforge.backend.repository.*;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,12 +16,16 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+/**
+ * Service responsible for asynchronous system notifications.
+ * Generates and manages alerts for step approvals, workflow completions,
+ * and execution failures, delivering them to the appropriate users.
+ */
 @Service
 @RequiredArgsConstructor
 @SuppressWarnings("null")
+@Slf4j
 public class NotificationService {
-
-    private static final Logger log = LoggerFactory.getLogger(NotificationService.class);
 
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;

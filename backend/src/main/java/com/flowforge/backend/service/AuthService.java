@@ -1,27 +1,29 @@
 package com.flowforge.backend.service;
 
 import com.flowforge.backend.config.AppProperties;
-import com.flowforge.backend.dto.request.ChangePasswordRequest;
-import com.flowforge.backend.dto.request.UpdateProfileRequest;
-import com.flowforge.backend.dto.request.LoginRequest;
-import com.flowforge.backend.dto.request.RefreshTokenRequest;
-import com.flowforge.backend.dto.request.RegisterRequest;
-import com.flowforge.backend.dto.response.AuthResponse;
-import com.flowforge.backend.dto.response.UserResponse;
-import com.flowforge.backend.entity.User;
-import com.flowforge.backend.enums.UserRole;
-import com.flowforge.backend.repository.UserRepository;
-import com.flowforge.backend.security.CustomUserDetails;
-import com.flowforge.backend.security.JwtService;
-import com.flowforge.backend.security.UserDetailsServiceImpl;
+import com.flowforge.backend.dto.*;
+import com.flowforge.backend.dto.request.*;
+import com.flowforge.backend.dto.response.*;
+import com.flowforge.backend.entity.*;
+import com.flowforge.backend.enums.*;
+import com.flowforge.backend.exception.*;
+import com.flowforge.backend.repository.*;
+import com.flowforge.backend.security.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+/**
+ * Service responsible for user authentication and identity management.
+ * Handles secure registration, login, JWT token generation/refresh,
+ * profile updates, and secure password management.
+ */
 @Service
 @SuppressWarnings("null")
+@Slf4j
 public class AuthService {
 
     private final UserRepository userRepository;
@@ -46,6 +48,7 @@ public class AuthService {
     }
 
     public AuthResponse register(RegisterRequest request) {
+        log.info("Attempting to register new user with email: {}", request.getEmail());
         try {
             // FIX 1: Explicit null check on name
             String name = request.getName();
@@ -116,13 +119,16 @@ public class AuthService {
                     .expiresIn(expiry)
                     .build();
         } catch (RuntimeException e) {
+            log.warn("Registration failed validation for email {}: {}", request.getEmail(), e.getMessage());
             throw e; // Let GlobalExceptionHandler handle it
         } catch (Exception e) {
+            log.error("Unexpected error during registration for email {}: {}", request.getEmail(), e.getMessage(), e);
             throw new RuntimeException("Registration failed: " + e.getMessage());
         }
     }
 
     public AuthResponse login(LoginRequest request) {
+        log.info("User login attempt: {}", request.getEmail());
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
         );

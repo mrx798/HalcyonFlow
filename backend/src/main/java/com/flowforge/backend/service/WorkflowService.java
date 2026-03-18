@@ -1,14 +1,12 @@
 package com.flowforge.backend.service;
 
-import com.flowforge.backend.dto.request.WorkflowRequest;
-import com.flowforge.backend.dto.response.WorkflowResponse;
-import com.flowforge.backend.entity.User;
-import com.flowforge.backend.entity.Workflow;
+import com.flowforge.backend.dto.request.*;
+import com.flowforge.backend.dto.response.*;
+import com.flowforge.backend.entity.*;
 import com.flowforge.backend.enums.WorkflowStatus;
-import com.flowforge.backend.exception.ResourceNotFoundException;
+import com.flowforge.backend.exception.*;
 import com.flowforge.backend.mapper.WorkflowMapper;
-import com.flowforge.backend.repository.UserRepository;
-import com.flowforge.backend.repository.WorkflowRepository;
+import com.flowforge.backend.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,12 +16,19 @@ import org.springframework.data.domain.Pageable;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import lombok.extern.slf4j.Slf4j;
 import java.util.ArrayList;
 import java.util.UUID;
 
+/**
+ * Service responsible for managing the lifecycle of workflows.
+ * Handles CRUD operations, versioning, validation, and comprehensive 
+ * health checks for workflow blueprints before they are executed.
+ */
 @Service
 @RequiredArgsConstructor
 @SuppressWarnings("null")
+@Slf4j
 public class WorkflowService {
 
     private final WorkflowRepository workflowRepository;
@@ -32,6 +37,7 @@ public class WorkflowService {
 
     @Transactional
     public WorkflowResponse createWorkflow(WorkflowRequest request, String userEmail) {
+        log.info("Creating new workflow '{}' for user {}", request.getName(), userEmail);
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "email", userEmail));
 
@@ -89,6 +95,7 @@ public class WorkflowService {
 
     @Transactional(readOnly = true)
     public void deleteWorkflow(UUID id, String userEmail) {
+        log.info("Deleting workflow {} for user {}", id, userEmail);
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "email", userEmail));
 
@@ -127,7 +134,7 @@ public class WorkflowService {
         }
 
         if (workflow.getSteps() != null) {
-            for (com.flowforge.backend.entity.Step step : workflow.getSteps()) {
+            for (Step step : workflow.getSteps()) {
                 // 3. Every step has at least one rule
                 if (step.getRules() == null || step.getRules().isEmpty()) {
                     errors.add("Step '" + step.getName() + "' must have at least one rule.");
@@ -140,7 +147,7 @@ public class WorkflowService {
                     }
 
                     // 5. All nextStepIds reference valid steps within the same workflow
-                    for (com.flowforge.backend.entity.Rule rule : step.getRules()) {
+                    for (Rule rule : step.getRules()) {
                         if (rule.getNextStepId() != null) {
                             boolean nextStepExists = workflow.getSteps().stream()
                                     .anyMatch(s -> s.getId().equals(rule.getNextStepId()));
@@ -161,14 +168,14 @@ public class WorkflowService {
     }
 
     @Transactional(readOnly = true)
-    public com.flowforge.backend.dto.response.HealthReportResponse getWorkflowHealth(UUID id, String userEmail) {
+    public HealthReportResponse getWorkflowHealth(UUID id, String userEmail) {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "email", userEmail));
 
         Workflow workflow = workflowRepository.findByIdAndCreatedById(id, user.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Workflow", "id", id.toString()));
 
-        List<com.flowforge.backend.dto.response.HealthReportResponse.HealthCheck> checks = new ArrayList<>();
+        List<HealthReportResponse.HealthCheck> checks = new ArrayList<>();
         int score = 100;
 
         // 1. Check Steps Presence
@@ -205,7 +212,7 @@ public class WorkflowService {
         if (workflow.getSteps() != null && !workflow.getSteps().isEmpty()) {
             int missingDefault = 0;
             List<UUID> targetIds = new ArrayList<>();
-            for (com.flowforge.backend.entity.Step s : workflow.getSteps()) {
+            for (Step s : workflow.getSteps()) {
                 if (s.getRules() != null) {
                     boolean hasDefault = s.getRules().stream().anyMatch(r -> Boolean.TRUE.equals(r.getIsDefault()));
                     if (!hasDefault) missingDefault++;
@@ -237,14 +244,14 @@ public class WorkflowService {
             }
         }
 
-        return com.flowforge.backend.dto.response.HealthReportResponse.builder()
+        return HealthReportResponse.builder()
                 .score(Math.max(0, score))
                 .checks(checks)
                 .build();
     }
 
-    private com.flowforge.backend.dto.response.HealthReportResponse.HealthCheck createCheck(String name, String status, String message) {
-        return com.flowforge.backend.dto.response.HealthReportResponse.HealthCheck.builder()
+    private HealthReportResponse.HealthCheck createCheck(String name, String status, String message) {
+        return HealthReportResponse.HealthCheck.builder()
                 .name(name)
                 .status(status)
                 .message(message)

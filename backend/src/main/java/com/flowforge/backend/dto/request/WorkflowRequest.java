@@ -18,13 +18,13 @@ import java.util.Map;
 @Builder
 public class WorkflowRequest {
 
-    @NotBlank(message = "Name is required")
+    @NotBlank(message = "Every workflow must have a descriptive, unique name")
     @Size(max = 200, message = "Name cannot exceed 200 characters")
     private String name;
 
     private String description;
 
-    @NotNull(message = "Input schema is required")
+    @NotNull(message = "An input schema definition is required to validate workflow executions")
     private Map<String, Object> inputSchema;
 }
 

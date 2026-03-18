@@ -2,8 +2,8 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
-import { ApiResponse } from '../types/auth';
-import { DashboardStats, ExecutionSummary } from '../types/dashboard';
+import { ApiResponse } from '../types';
+import { DashboardStats, ExecutionSummary } from '../types';
 import { 
   XAxis, 
   YAxis, 

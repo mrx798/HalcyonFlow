@@ -24,11 +24,11 @@ public class CreateStepRequest {
     // workflowId is set from the path variable by the controller, not from the JSON body
     private UUID workflowId;
 
-    @NotBlank(message = "Step name is required")
+    @NotBlank(message = "Please provide a descriptive name for this step")
     @Size(min = 2, max = 200, message = "Step name must be between 2 and 200 characters")
     private String name;
 
-    @NotNull(message = "Step type is required")
+    @NotNull(message = "A valid step type (e.g., TASK, APPROVAL) must be selected")
     private StepType stepType;
 
     private Integer stepOrder;

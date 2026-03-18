@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { authApi } from '../api/auth.api';
-import { ApiResponse, AuthResponse } from '../types/auth';
+import { ApiResponse, AuthResponse } from '../types';
 import { toast } from 'sonner';
 import { User, Mail, Lock, UserPlus, Loader2, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';

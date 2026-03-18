@@ -1,8 +1,7 @@
 package com.flowforge.backend.engine;
 
 import com.flowforge.backend.entity.Rule;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -11,15 +10,27 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import com.flowforge.backend.constants.AppConstants;
 
 /**
- * Evaluates all rules for a step and returns the first matching rule.
- * Rules are evaluated in priority order (lowest number first), with DEFAULT always last.
+ * Central engine responsible for evaluating rules and determining workflow routing.
+ *
+ * <p>Rule Selection Algorithm:</p>
+ * <ol>
+ *   <li>Rules are sorted by priority in ascending order (lowest number evaluated first).</li>
+ *   <li>The DEFAULT rule is separated from the expression-based regular rules.</li>
+ *   <li>Regular rules are evaluated sequentially. The first rule to evaluate to {@code true} wins.</li>
+ *   <li>If no regular rule evaluates to true, the DEFAULT rule is automatically selected as a fallback.</li>
+ *   <li>If no rules match and no DEFAULT rule exists, the step halts with no matching rule.</li>
+ * </ol>
+ *
+ * @author Sharath
+ * @version 1.0
+ * @since 2026
  */
 @Component
+@Slf4j
 public class RuleEngine {
-
-    private static final Logger log = LoggerFactory.getLogger(RuleEngine.class);
 
     private final ExpressionParser expressionParser;
 
@@ -49,7 +60,7 @@ public class RuleEngine {
         List<Rule> regularRules = new ArrayList<>();
 
         for (Rule rule : sorted) {
-            if ("DEFAULT".equals(rule.getCondition())) {
+            if (AppConstants.RULE_DEFAULT.equals(rule.getCondition())) {
                 defaultRule = rule;
             } else {
                 regularRules.add(rule);

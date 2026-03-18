@@ -1,27 +1,50 @@
 package com.flowforge.backend.engine;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import com.flowforge.backend.constants.AppConstants;
 
 /**
- * Core expression evaluator that parses and evaluates rule condition strings
- * against a map of input data. Supports comparison, logical, and string function operators.
+ * Custom expression parser for FlowForge rule engine.
+ *
+ * <p>Evaluates boolean conditions against workflow input data at runtime.
+ * Supports comparison operators (==, !=, <, >, <=, >=), logical operators
+ * (&& and ||), string functions (contains, startsWith, endsWith),
+ * and the special DEFAULT keyword.</p>
+ *
+ * <p>Example usage:</p>
+ * <pre>
+ *   Map<String, Object> data = Map.of("amount", 250, "country", "US");
+ *   boolean result = parser.evaluate("amount > 100 && country == 'US'", data);
+ *   // result = true
+ * </pre>
+ *
+ * @author Sharath
+ * @version 1.0
+ * @since 2026
  */
+@Slf4j
 public class ExpressionParser {
 
-    private static final Logger log = LoggerFactory.getLogger(ExpressionParser.class);
     private static final Pattern FUNCTION_PATTERN =
             Pattern.compile("(contains|startsWith|endsWith)\\s*\\(\\s*([a-zA-Z_][a-zA-Z0-9_.]*)\\s*,\\s*[\"']([^\"']*)[\"']\\s*\\)");
 
     /**
      * Evaluates a condition string against the provided input data.
      *
-     * @param condition the condition expression
-     * @param data      the input data map
+     * <p>Rules are evaluated in this order:</p>
+     * <ol>
+     *   <li>DEFAULT keyword always returns true</li>
+     *   <li>OR conditions (||) are split and each part evaluated</li>
+     *   <li>AND conditions (&&) are split and each part evaluated</li>
+     *   <li>Individual comparisons are evaluated last</li>
+     * </ol>
+     *
+     * @param condition the condition string to evaluate (e.g., "amount > 100 && country == 'US'")
+     * @param data      the workflow execution input data to evaluate against
      * @return true if the condition matches, false otherwise
      */
     public boolean evaluate(String condition, Map<String, Object> data) {
@@ -32,7 +55,7 @@ public class ExpressionParser {
         String trimmed = condition.trim();
 
         // DEFAULT always matches
-        if ("DEFAULT".equals(trimmed)) {
+        if (AppConstants.RULE_DEFAULT.equals(trimmed)) {
             return true;
         }
 
@@ -66,9 +89,9 @@ public class ExpressionParser {
 
         String trimmed = condition.trim();
 
-        if ("DEFAULT".equals(trimmed)) {
+        if (AppConstants.RULE_DEFAULT.equals(trimmed)) {
             response.setResult(true);
-            explanation.add(new com.flowforge.backend.dto.ConditionTestResponse.ExplanationStep("DEFAULT", "always evaluates to true", true));
+            explanation.add(new com.flowforge.backend.dto.ConditionTestResponse.ExplanationStep(AppConstants.RULE_DEFAULT, "always evaluates to true", true));
             response.setExplanation(explanation);
             return response;
         }
@@ -95,48 +118,60 @@ public class ExpressionParser {
 
         int orIndex = findTopLevelOperator(expr, "||");
         if (orIndex >= 0) {
-            String left = expr.substring(0, orIndex).trim();
-            String right = expr.substring(orIndex + 2).trim();
-            boolean leftResult = evaluateExpressionWithExplanation(left, data, explanation);
-            if (leftResult) {
-               explanation.add(new com.flowforge.backend.dto.ConditionTestResponse.ExplanationStep("OR short-circuit", true));
-               return true;
-            }
-            boolean rightResult = evaluateExpressionWithExplanation(right, data, explanation);
-            boolean result = leftResult || rightResult;
-            explanation.add(new com.flowforge.backend.dto.ConditionTestResponse.ExplanationStep("OR", result));
-            return result;
+            return handleOrExpressionExplanation(expr, orIndex, data, explanation);
         }
 
         int andIndex = findTopLevelOperator(expr, "&&");
         if (andIndex >= 0) {
-            String left = expr.substring(0, andIndex).trim();
-            String right = expr.substring(andIndex + 2).trim();
-            boolean leftResult = evaluateExpressionWithExplanation(left, data, explanation);
-            if (!leftResult) {
-               explanation.add(new com.flowforge.backend.dto.ConditionTestResponse.ExplanationStep("AND short-circuit", false));
-               return false;
-            }
-            boolean rightResult = evaluateExpressionWithExplanation(right, data, explanation);
-            boolean result = leftResult && rightResult;
-            explanation.add(new com.flowforge.backend.dto.ConditionTestResponse.ExplanationStep("AND", result));
-            return result;
+            return handleAndExpressionExplanation(expr, andIndex, data, explanation);
         }
 
         Matcher funcMatcher = FUNCTION_PATTERN.matcher(expr);
         if (funcMatcher.matches()) {
-            String funcName = funcMatcher.group(1);
-            String fieldName = funcMatcher.group(2);
-            String value = funcMatcher.group(3);
-            boolean result = evaluateFunction(funcName, fieldName, value, data);
-            
-            Object actualValue = data.get(fieldName);
-            String valStr = actualValue != null ? String.valueOf(actualValue) : "null";
-            explanation.add(new com.flowforge.backend.dto.ConditionTestResponse.ExplanationStep(expr, funcName + "('" + valStr + "', '" + value + "')", result));
-            return result;
+            return handleFunctionExplanation(expr, funcMatcher, data, explanation);
         }
 
         return evaluateComparisonWithExplanation(expr, data, explanation);
+    }
+
+    private boolean handleOrExpressionExplanation(String expr, int orIndex, Map<String, Object> data, java.util.List<com.flowforge.backend.dto.ConditionTestResponse.ExplanationStep> explanation) {
+        String left = expr.substring(0, orIndex).trim();
+        String right = expr.substring(orIndex + 2).trim();
+        boolean leftResult = evaluateExpressionWithExplanation(left, data, explanation);
+        if (leftResult) {
+            explanation.add(new com.flowforge.backend.dto.ConditionTestResponse.ExplanationStep("OR short-circuit", true));
+            return true;
+        }
+        boolean rightResult = evaluateExpressionWithExplanation(right, data, explanation);
+        boolean result = leftResult || rightResult;
+        explanation.add(new com.flowforge.backend.dto.ConditionTestResponse.ExplanationStep("OR", result));
+        return result;
+    }
+
+    private boolean handleAndExpressionExplanation(String expr, int andIndex, Map<String, Object> data, java.util.List<com.flowforge.backend.dto.ConditionTestResponse.ExplanationStep> explanation) {
+        String left = expr.substring(0, andIndex).trim();
+        String right = expr.substring(andIndex + 2).trim();
+        boolean leftResult = evaluateExpressionWithExplanation(left, data, explanation);
+        if (!leftResult) {
+            explanation.add(new com.flowforge.backend.dto.ConditionTestResponse.ExplanationStep("AND short-circuit", false));
+            return false;
+        }
+        boolean rightResult = evaluateExpressionWithExplanation(right, data, explanation);
+        boolean result = leftResult && rightResult;
+        explanation.add(new com.flowforge.backend.dto.ConditionTestResponse.ExplanationStep("AND", result));
+        return result;
+    }
+
+    private boolean handleFunctionExplanation(String expr, Matcher funcMatcher, Map<String, Object> data, java.util.List<com.flowforge.backend.dto.ConditionTestResponse.ExplanationStep> explanation) {
+        String funcName = funcMatcher.group(1);
+        String fieldName = funcMatcher.group(2);
+        String value = funcMatcher.group(3);
+        boolean result = evaluateFunction(funcName, fieldName, value, data);
+
+        Object actualValue = data.get(fieldName);
+        String valStr = actualValue != null ? String.valueOf(actualValue) : "null";
+        explanation.add(new com.flowforge.backend.dto.ConditionTestResponse.ExplanationStep(expr, funcName + "('" + valStr + "', '" + value + "')", result));
+        return result;
     }
     
     private boolean evaluateComparisonWithExplanation(String expr, Map<String, Object> data, java.util.List<com.flowforge.backend.dto.ConditionTestResponse.ExplanationStep> explanation) {

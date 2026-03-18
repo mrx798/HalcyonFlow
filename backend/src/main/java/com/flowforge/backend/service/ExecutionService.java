@@ -1,30 +1,15 @@
 package com.flowforge.backend.service;
 
-import com.flowforge.backend.dto.request.ApproveStepRequest;
-import com.flowforge.backend.dto.request.ExecuteWorkflowRequest;
-import com.flowforge.backend.dto.response.DashboardStatsResponse;
-import com.flowforge.backend.dto.response.ExecutionResponse;
-import com.flowforge.backend.dto.response.ExecutionSummaryResponse;
-import com.flowforge.backend.engine.ExpressionParser;
-import com.flowforge.backend.engine.RuleEngine;
-import com.flowforge.backend.engine.StepExecutor;
-import com.flowforge.backend.entity.Execution;
-import com.flowforge.backend.entity.Rule;
-import com.flowforge.backend.entity.Step;
-import com.flowforge.backend.entity.User;
-import com.flowforge.backend.entity.Workflow;
-import com.flowforge.backend.enums.ExecutionStatus;
-import com.flowforge.backend.enums.NotificationType;
-import com.flowforge.backend.enums.WorkflowStatus;
-import com.flowforge.backend.exception.ResourceNotFoundException;
-import com.flowforge.backend.repository.ExecutionRepository;
-import com.flowforge.backend.repository.StepRepository;
-import com.flowforge.backend.repository.UserRepository;
-import com.flowforge.backend.repository.WorkflowRepository;
+import com.flowforge.backend.dto.*;
+import com.flowforge.backend.dto.request.*;
+import com.flowforge.backend.dto.response.*;
+import com.flowforge.backend.engine.*;
+import com.flowforge.backend.entity.*;
+import com.flowforge.backend.enums.*;
+import com.flowforge.backend.exception.*;
+import com.flowforge.backend.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.lang.NonNull;
@@ -37,18 +22,31 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import com.flowforge.backend.constants.AppConstants;
 
+/**
+ * Service responsible for the asynchronous orchestration and execution of workflows.
+ *
+ * <p>Async Execution Flow:</p>
+ * <ol>
+ *   <li>The execution context is initialized, validated against schemas, and persisted.</li>
+ *   <li>The engine (via {@link #runExecutionAsync}) takes over execution on a separate virtual thread.</li>
+ *   <li>Steps are processed sequentially using the custom Rule Engine.</li>
+ *   <li>If an APPROVAL step is hit, the thread pauses execution and awaits human input.</li>
+ *   <li>Upon manual approval, execution is asynchronously resumed from the paused state.</li>
+ *   <li>If a step fails, execution halts and can be safely retried without restarting the workflow.</li>
+ * </ol>
+ */
 @Service
 @RequiredArgsConstructor
 @SuppressWarnings("null")
+@Slf4j
 public class ExecutionService {
-    private static final Logger log = LoggerFactory.getLogger(ExecutionService.class);
 
     private final ExecutionRepository executionRepository;
     private final WorkflowRepository workflowRepository;
@@ -161,17 +159,7 @@ public class ExecutionService {
         int totalIterations = 0;
 
         // Restore step visit counts from previous iterations/retries
-        Map<UUID, Integer> stepVisits = new java.util.HashMap<>();
-        if (execution.getLogs() != null) {
-            for (Map<String, Object> logEntry : execution.getLogs()) {
-                if (logEntry.containsKey("stepId") && "completed".equalsIgnoreCase(String.valueOf(logEntry.get("status")))) {
-                    try {
-                        UUID sid = UUID.fromString(logEntry.get("stepId").toString());
-                        stepVisits.put(sid, stepVisits.getOrDefault(sid, 0) + 1);
-                    } catch (Exception ignored) {}
-                }
-            }
-        }
+        Map<UUID, Integer> stepVisits = restoreStepVisits(execution);
 
         while (currentStepId != null) {
             totalIterations++;
@@ -220,7 +208,7 @@ public class ExecutionService {
                 return; // Pause execution â€” will resume after approval
             }
 
-            if ("FAILED".equals(stepResult.status())) {
+            if (AppConstants.STATUS_FAILED.equals(stepResult.status())) {
                 logEntry.put("errorMessage", stepResult.message());
                 execution.getLogs().add(logEntry);
                 failExecution(execution, stepResult.message());
@@ -232,32 +220,7 @@ public class ExecutionService {
             RuleEngine.RuleEvaluationResult ruleResult = ruleEngine.evaluate(rules, execution.getInputData());
 
             // Record each rule evaluation
-            List<Map<String, Object>> evaluatedRules = new ArrayList<>();
-            List<Rule> sortedRules = rules.stream()
-                    .sorted(Comparator.comparingInt(Rule::getPriority))
-                    .collect(Collectors.toList());
-
-            boolean selectedByDefault = ruleResult.matched() && "DEFAULT".equals(ruleResult.matchedRule().getCondition());
-
-            for (Rule rule : sortedRules) {
-                Map<String, Object> ruleLog = new LinkedHashMap<>();
-                ruleLog.put("rule", rule.getCondition());
-
-                if ("DEFAULT".equals(rule.getCondition())) {
-                    ruleLog.put("result", selectedByDefault);
-                } else {
-                    boolean res;
-                    try {
-                        res = expressionParser.evaluate(rule.getCondition(), execution.getInputData());
-                    } catch (Exception e) {
-                        res = false;
-                    }
-                    ruleLog.put("result", res);
-                }
-                evaluatedRules.add(ruleLog);
-            }
-
-            logEntry.put("evaluated_rules", evaluatedRules);
+            logRuleEvaluations(rules, ruleResult, execution, logEntry);
 
             if (!ruleResult.matched()) {
                 // No matching rule â€” check if step has any rules at all
@@ -293,6 +256,49 @@ public class ExecutionService {
 
             currentStepId = nextStepId;
         }
+    }
+
+    private Map<UUID, Integer> restoreStepVisits(Execution execution) {
+        Map<UUID, Integer> stepVisits = new java.util.HashMap<>();
+        if (execution.getLogs() != null) {
+            for (Map<String, Object> logEntry : execution.getLogs()) {
+                if (logEntry.containsKey("stepId") && AppConstants.STATUS_COMPLETED.equalsIgnoreCase(String.valueOf(logEntry.get("status")))) {
+                    try {
+                        UUID sid = UUID.fromString(logEntry.get("stepId").toString());
+                        stepVisits.put(sid, stepVisits.getOrDefault(sid, 0) + 1);
+                    } catch (Exception ignored) {}
+                }
+            }
+        }
+        return stepVisits;
+    }
+
+    private void logRuleEvaluations(List<Rule> rules, com.flowforge.backend.engine.RuleEngine.RuleEvaluationResult ruleResult, Execution execution, Map<String, Object> logEntry) {
+        List<Map<String, Object>> evaluatedRules = new java.util.ArrayList<>();
+        List<Rule> sortedRules = rules.stream()
+                .sorted(java.util.Comparator.comparingInt(Rule::getPriority))
+                .collect(java.util.stream.Collectors.toList());
+
+        boolean selectedByDefault = ruleResult.matched() && AppConstants.RULE_DEFAULT.equals(ruleResult.matchedRule().getCondition());
+
+        for (Rule rule : sortedRules) {
+            Map<String, Object> ruleLog = new java.util.LinkedHashMap<>();
+            ruleLog.put("rule", rule.getCondition());
+
+            if (AppConstants.RULE_DEFAULT.equals(rule.getCondition())) {
+                ruleLog.put("result", selectedByDefault);
+            } else {
+                boolean res;
+                try {
+                    res = expressionParser.evaluate(rule.getCondition(), execution.getInputData());
+                } catch (Exception e) {
+                    res = false;
+                }
+                ruleLog.put("result", res);
+            }
+            evaluatedRules.add(ruleLog);
+        }
+        logEntry.put("evaluated_rules", evaluatedRules);
     }
 
     @Transactional
@@ -334,7 +340,7 @@ public class ExecutionService {
         }
 
         if (targetLog != null) {
-            targetLog.put("status", Boolean.TRUE.equals(request.getApproved()) ? "COMPLETED" : "FAILED");
+            targetLog.put("status", Boolean.TRUE.equals(request.getApproved()) ? AppConstants.STATUS_COMPLETED : AppConstants.STATUS_FAILED);
             targetLog.put("approverId", userId.toString());
             targetLog.put("approverName", approver.getName());
             targetLog.put("approvalComment", request.getComment());
@@ -447,7 +453,7 @@ public class ExecutionService {
         String failedStepIdStr = null;
         for (int i = execution.getLogs().size() - 1; i >= 0; i--) {
             Map<String, Object> logEntry = execution.getLogs().get(i);
-            if ("FAILED".equals(logEntry.get("status")) || logEntry.containsKey("errorMessage")) {
+            if (AppConstants.STATUS_FAILED.equals(logEntry.get("status")) || logEntry.containsKey("errorMessage")) {
                 failedStepIdStr = (String) logEntry.get("stepId");
                 if (failedStepIdStr != null) {
                     break;

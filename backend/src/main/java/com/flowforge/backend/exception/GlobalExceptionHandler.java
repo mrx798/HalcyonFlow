@@ -1,6 +1,8 @@
 package com.flowforge.backend.exception;
 
-import com.flowforge.backend.dto.response.ErrorResponse;
+import com.flowforge.backend.dto.*;
+import com.flowforge.backend.dto.request.*;
+import com.flowforge.backend.dto.response.*;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,7 +17,10 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
+import lombok.extern.slf4j.Slf4j;
+
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -112,8 +117,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleGenericException(
             Exception ex, HttpServletRequest request) {
 
-        // Log the full stack trace for debugging
-        ex.printStackTrace();
+        log.error("Unhandled server error at {}: {}", request.getRequestURI(), ex.getMessage(), ex);
 
         ErrorResponse response = ErrorResponse.builder()
                 .success(false)

@@ -2,6 +2,7 @@ package com.flowforge.backend.engine;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import com.flowforge.backend.constants.AppConstants;
 
 /**
  * Validates rule condition syntax before persisting.
@@ -42,7 +43,7 @@ public final class RuleConditionValidator {
         String trimmed = condition.trim();
 
         // DEFAULT is always valid
-        if ("DEFAULT".equals(trimmed)) {
+        if (AppConstants.RULE_DEFAULT.equals(trimmed)) {
             return new ValidationResult(true, "Valid DEFAULT condition");
         }
 
