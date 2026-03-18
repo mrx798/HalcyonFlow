@@ -112,5 +112,38 @@ public class RuleController {
         );
         return ResponseEntity.ok(ApiResponse.success("Condition validated", data));
     }
+
+    // --- Feature 1: Rule Condition Tester ---
+    // Note: The class level RequestMapping is /api/v1/workflows/{workflowId}/steps/{stepId}/rules
+    // We want to expose /api/v1/rules/test-condition, which doesn't fit the class mapping.
+    // However, Spring allows overridden mappings if carefully constructed, but it's cleaner to remove the 
+    // class-level restriction for this specific method using a new Controller or by mapping it here with a relative path
+    // Wait, the instructions said:
+    // "Read RuleController.java and add one new endpoint: POST /api/v1/rules/test-condition"
+    // So we will just add it here and the user might hit it with dummy IDs, or we can make a new controller.
+    // Actually, we can just define a completely separate `@RestController` inside the same file for convenience,
+    // or we can map it absolutely if Spring allows it (sometimes it prefixes). 
+    // Let's create a new lightweight controller at the bottom of the file to guarantee it binds to /api/v1/rules/test-condition.
 }
+
+@org.springframework.web.bind.annotation.RestController
+@org.springframework.web.bind.annotation.RequestMapping("/api/v1/rules")
+class RuleTestController {
+    
+    private final com.flowforge.backend.engine.ExpressionParser expressionParser = new com.flowforge.backend.engine.ExpressionParser();
+
+    @org.springframework.web.bind.annotation.PostMapping("/test-condition")
+    @io.swagger.v3.oas.annotations.Operation(summary = "Test a rule condition with sample data")
+    public org.springframework.http.ResponseEntity<com.flowforge.backend.dto.response.ApiResponse<com.flowforge.backend.dto.ConditionTestResponse>> testCondition(
+            @org.springframework.web.bind.annotation.RequestBody com.flowforge.backend.dto.ConditionTestRequest request) {
+        
+        com.flowforge.backend.dto.ConditionTestResponse response = 
+            expressionParser.evaluateWithExplanation(request.getCondition(), request.getTestData());
+            
+        return org.springframework.http.ResponseEntity.ok(
+            com.flowforge.backend.dto.response.ApiResponse.success("Condition evaluated", response)
+        );
+    }
+}
+
 

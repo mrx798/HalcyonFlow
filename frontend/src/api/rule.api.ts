@@ -13,4 +13,6 @@ export const ruleApi = {
     api.post(`/workflows/${workflowId}/steps/${stepId}/rules/validate`, data),
   reorderRules: (workflowId: string, stepId: string, data: { ruleIds: string[] }) =>
     api.put(`/workflows/${workflowId}/steps/${stepId}/rules/reorder`, data),
+  testCondition: (condition: string, testData: any) =>
+    api.post(`/rules/test-condition`, { condition, testData }),
 };

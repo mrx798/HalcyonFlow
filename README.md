@@ -49,6 +49,11 @@ Modern businesses run on processes — expense approvals, employee onboarding, c
 - **Execution Logs** — Every rule evaluated with TRUE/FALSE result, selected next step, approver, duration
 - **Audit Log** — Complete execution history for compliance and debugging
 
+### 🚀 Advanced Enterprise Features (New)
+- **Rule Condition Tester** — Test complex conditions (e.g. `amount > 500 && country == 'IN'`) against sample data with a live step-by-step evaluation breakdown before saving.
+- **Dry Run Simulator** — Simulate a full workflow execution to visualize the predicted path and final outcome based on specific input data, without creating a real database execution.
+- **Workflow Health Check** — Instant semantic diagnostics that catch dead ends, missing start steps, rules with invalid next steps, or missing rule configurations.
+
 ### Technical Features
 - **JWT Authentication** — Access token + refresh token with BCrypt password hashing
 - **Async Execution Engine** — Java 21 Virtual Threads for concurrent workflow processing
@@ -63,7 +68,7 @@ Modern businesses run on processes — expense approvals, employee onboarding, c
 - Real-time Dashboard with execution trends and statistics
 - Notifications system for execution events and approvals
 - Workflow statistics (total runs, success rate, average runtime)
-- Postman collection with 28 pre-configured requests
+- **Postman Test Suite** — Comprehensive collection with 40+ tests (Groups 1-10) covering all features with 100% pass rate.
 - Docker one-command setup
 
 ---

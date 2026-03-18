@@ -1,0 +1,4 @@
+﻿[ERROR] /D:/backend/backend/src/main/java/com/flowforge/backend/service/SimulationService.java:[64,44] cannot find symbol
+[ERROR] /D:/backend/backend/src/main/java/com/flowforge/backend/service/SimulationService.java:[64,76] cannot find symbol
+[ERROR] /D:/backend/backend/src/main/java/com/flowforge/backend/service/SimulationService.java:[64,44] cannot find symbol
+[ERROR] /D:/backend/backend/src/main/java/com/flowforge/backend/service/SimulationService.java:[64,76] cannot find symbol

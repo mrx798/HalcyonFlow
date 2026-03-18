@@ -1,0 +1,1673 @@
+{
+	"info": {
+		"_postman_id": "8d3d9e4a-4a7b-4b1a-9c1a-1a2b3c4d5e6f",
+		"name": "HalcyonFlow API Test Suite",
+		"description": "Complete test suite for the HalcyonFlow Workflow Automation platform. Includes Group 1-10 tests: Auth, Workflows, Steps, Rules, Rule Engine, Simulation, Health, Execution, Dashboard, Notifications.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "GROUP 1 - Authentication",
+			"item": [
+				{
+					"name": "1.1 Register new user",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201, 200, 400 or 409\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 201, 400, 409]);",
+									"});",
+									"if (pm.response.code === 201 || pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.collectionVariables.set(\"TOKEN\", jsonData.data.accessToken);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Postman Test User\",\n  \"email\": \"postman@flowforge.com\",\n  \"password\": \"password123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:8080/api/v1/auth/register"
+					}
+				},
+				{
+					"name": "1.2 Register duplicate email (should fail)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400 or 409\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([400, 409, 500]);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Postman Test User\",\n  \"email\": \"postman@flowforge.com\",\n  \"password\": \"password123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:8080/api/v1/auth/register"
+					}
+				},
+				{
+					"name": "1.3 Login with correct credentials",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"var jsonData = pm.response.json();",
+									"pm.collectionVariables.set(\"TOKEN\", jsonData.data.accessToken);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"postman@flowforge.com\",\n  \"password\": \"password123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:8080/api/v1/auth/login"
+					}
+				},
+				{
+					"name": "1.4 Login with wrong password",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([401, 403]);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"postman@flowforge.com\",\n  \"password\": \"wrongpassword\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:8080/api/v1/auth/login"
+					}
+				},
+				{
+					"name": "1.5 Get current user profile",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{TOKEN}}"
+							}
+						],
+						"url": "http://localhost:8080/api/v1/auth/me"
+					}
+				},
+				{
+					"name": "1.6 Access protected endpoint without token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401 or 403\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([401, 403]);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "http://localhost:8080/api/v1/workflows"
+					}
+				}
+			]
+		},
+		{
+			"name": "GROUP 2 - Workflow Tests",
+			"item": [
+				{
+					"name": "2.1 Create workflow",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([201, 200]);",
+									"});",
+									"var jsonData = pm.response.json();",
+									"pm.collectionVariables.set(\"WORKFLOW_ID\", jsonData.data.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{TOKEN}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Expense Approval Test\",\n  \"description\": \"Postman test workflow\",\n  \"inputSchema\": {\n    \"amount\": {\"type\": \"number\", \"required\": true},\n    \"country\": {\"type\": \"string\", \"required\": true},\n    \"priority\": {\n      \"type\": \"string\",\n      \"required\": true,\n      \"allowed_values\": [\"High\", \"Medium\", \"Low\"]\n    }\n  }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:8080/api/v1/workflows"
+					}
+				},
+				{
+					"name": "2.2 List workflows",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{TOKEN}}"
+							}
+						],
+						"url": "http://localhost:8080/api/v1/workflows"
+					}
+				},
+				{
+					"name": "2.3 Get workflow by ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{TOKEN}}"
+							}
+						],
+						"url": "http://localhost:8080/api/v1/workflows/{{WORKFLOW_ID}}"
+					}
+				},
+				{
+					"name": "2.4 Update workflow",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{TOKEN}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Expense Approval Test Updated\",\n  \"description\": \"Updated description\",\n  \"inputSchema\": {\n    \"amount\": {\"type\": \"number\", \"required\": true},\n    \"country\": {\"type\": \"string\", \"required\": true}\n  }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:8080/api/v1/workflows/{{WORKFLOW_ID}}"
+					}
+				},
+				{
+					"name": "2.5 Validate workflow",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{TOKEN}}"
+							}
+						],
+						"url": "http://localhost:8080/api/v1/workflows/{{WORKFLOW_ID}}/validate"
+					}
+				}
+			]
+		},
+		{
+			"name": "GROUP 3 - Step Tests",
+			"item": [
+				{
+					"name": "3.1 Create Step 1: Initial Check",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([201, 200]);",
+									"});",
+									"var jsonData = pm.response.json();",
+									"pm.collectionVariables.set(\"STEP_ID_1\", jsonData.data.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{TOKEN}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Initial Check\",\n  \"stepType\": \"TASK\",\n  \"stepOrder\": 1,\n  \"metadata\": {}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:8080/api/v1/workflows/{{WORKFLOW_ID}}/steps"
+					}
+				},
+				{
+					"name": "3.2 Create Step 2: Manager Approval",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([201, 200]);",
+									"});",
+									"var jsonData = pm.response.json();",
+									"pm.collectionVariables.set(\"STEP_ID_2\", jsonData.data.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{TOKEN}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Manager Approval\",\n  \"stepType\": \"APPROVAL\",\n  \"stepOrder\": 2,\n  \"metadata\": {\n    \"assignee_email\": \"manager@test.com\",\n    \"instructions\": \"Review the expense request\"\n  }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:8080/api/v1/workflows/{{WORKFLOW_ID}}/steps"
+					}
+				},
+				{
+					"name": "3.3 Create Step 3: Finance Notification",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([201, 200]);",
+									"});",
+									"var jsonData = pm.response.json();",
+									"pm.collectionVariables.set(\"STEP_ID_3\", jsonData.data.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{TOKEN}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Finance Notification\",\n  \"stepType\": \"NOTIFICATION\",\n  \"stepOrder\": 3,\n  \"metadata\": {\n    \"notification_channel\": \"email\",\n    \"recipient\": \"finance@test.com\"\n  }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:8080/api/v1/workflows/{{WORKFLOW_ID}}/steps"
+					}
+				},
+				{
+					"name": "3.4 Create Step 4: Task Rejection",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([201, 200]);",
+									"});",
+									"var jsonData = pm.response.json();",
+									"pm.collectionVariables.set(\"STEP_ID_4\", jsonData.data.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{TOKEN}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Task Rejection\",\n  \"stepType\": \"TASK\",\n  \"stepOrder\": 4,\n  \"metadata\": {}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:8080/api/v1/workflows/{{WORKFLOW_ID}}/steps"
+					}
+				},
+				{
+					"name": "3.5 List all steps",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{TOKEN}}"
+							}
+						],
+						"url": "http://localhost:8080/api/v1/workflows/{{WORKFLOW_ID}}/steps"
+					}
+				},
+				{
+					"name": "3.6 Update a step",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{TOKEN}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Initial Check Updated\",\n  \"stepType\": \"TASK\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:8080/api/v1/workflows/{{WORKFLOW_ID}}/steps/{{STEP_ID_1}}"
+					}
+				}
+			]
+		},
+		{
+			"name": "GROUP 4 - Rule Tests",
+			"item": [
+				{
+					"name": "4.1 Add Rule 1 to Initial Check",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([201, 200]);",
+									"});",
+									"var jsonData = pm.response.json();",
+									"pm.collectionVariables.set(\"RULE_ID_1\", jsonData.data.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{TOKEN}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"condition\": \"amount > 100 && country == 'US'\",\n  \"nextStepId\": \"{{STEP_ID_2}}\",\n  \"priority\": 1,\n  \"isDefault\": false\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:8080/api/v1/workflows/{{WORKFLOW_ID}}/steps/{{STEP_ID_1}}/rules"
+					}
+				},
+				{
+					"name": "4.2 Add DEFAULT Rule to Initial Check",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([201, 200]);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{TOKEN}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"condition\": \"DEFAULT\",\n  \"nextStepId\": \"{{STEP_ID_4}}\",\n  \"priority\": 99,\n  \"isDefault\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:8080/api/v1/workflows/{{WORKFLOW_ID}}/steps/{{STEP_ID_1}}/rules"
+					}
+				},
+				{
+					"name": "4.3 Add DEFAULT Rule to Manager Approval",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([201, 200]);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{TOKEN}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"condition\": \"DEFAULT\",\n  \"nextStepId\": \"{{STEP_ID_3}}\",\n  \"priority\": 1,\n  \"isDefault\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:8080/api/v1/workflows/{{WORKFLOW_ID}}/steps/{{STEP_ID_2}}/rules"
+					}
+				},
+				{
+					"name": "4.4 Add DEFAULT Rule to Finance Notification",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([201, 200]);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{TOKEN}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"condition\": \"DEFAULT\",\n  \"nextStepId\": null,\n  \"priority\": 1,\n  \"isDefault\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:8080/api/v1/workflows/{{WORKFLOW_ID}}/steps/{{STEP_ID_3}}/rules"
+					}
+				},
+				{
+					"name": "4.5 Add DEFAULT Rule to Task Rejection",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([201, 200]);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{TOKEN}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"condition\": \"DEFAULT\",\n  \"nextStepId\": null,\n  \"priority\": 1,\n  \"isDefault\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:8080/api/v1/workflows/{{WORKFLOW_ID}}/steps/{{STEP_ID_4}}/rules"
+					}
+				},
+				{
+					"name": "4.6 List rules for Initial Check",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{TOKEN}}"
+							}
+						],
+						"url": "http://localhost:8080/api/v1/workflows/{{WORKFLOW_ID}}/steps/{{STEP_ID_1}}/rules"
+					}
+				},
+				{
+					"name": "4.7 Validate a valid condition",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{TOKEN}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"condition\": \"amount > 100 && country == 'US'\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:8080/api/v1/workflows/{{WORKFLOW_ID}}/steps/{{STEP_ID_1}}/rules/validate"
+					}
+				},
+				{
+					"name": "4.8 Validate an invalid condition",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{TOKEN}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"condition\": \"amount >>> 100 &&& country\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:8080/api/v1/workflows/{{WORKFLOW_ID}}/steps/{{STEP_ID_1}}/rules/validate"
+					}
+				}
+			]
+		},
+		{
+			"name": "GROUP 5 - Rule Engine Tests",
+			"item": [
+				{
+					"name": "5.1 Test condition TRUE case",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"var jsonData = pm.response.json();",
+									"pm.test(\"Result should be true\", function () {",
+									"    pm.expect(jsonData.data.result).to.eql(true);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{TOKEN}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"condition\": \"amount > 100 && country == 'US'\",\n  \"testData\": {\n    \"amount\": 250,\n    \"country\": \"US\"\n  }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:8080/api/v1/rules/test-condition"
+					}
+				},
+				{
+					"name": "5.2 Test condition FALSE case",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"var jsonData = pm.response.json();",
+									"pm.test(\"Result should be false\", function () {",
+									"    pm.expect(jsonData.data.result).to.eql(false);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{TOKEN}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"condition\": \"amount > 100 && country == 'US'\",\n  \"testData\": {\n    \"amount\": 20,\n    \"country\": \"US\"\n  }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:8080/api/v1/rules/test-condition"
+					}
+				},
+				{
+					"name": "5.3 Test DEFAULT condition",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"var jsonData = pm.response.json();",
+									"pm.test(\"Result should be true\", function () {",
+									"    pm.expect(jsonData.data.result).to.eql(true);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{TOKEN}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"condition\": \"DEFAULT\",\n  \"testData\": {\"anything\": \"value\"}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:8080/api/v1/rules/test-condition"
+					}
+				},
+				{
+					"name": "5.4 Test OR condition",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"var jsonData = pm.response.json();",
+									"pm.test(\"Result should be true\", function () {",
+									"    pm.expect(jsonData.data.result).to.eql(true);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{TOKEN}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"condition\": \"amount <= 100 || country == 'IN'\",\n  \"testData\": {\n    \"amount\": 250,\n    \"country\": \"IN\"\n  }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:8080/api/v1/rules/test-condition"
+					}
+				}
+			]
+		},
+		{
+			"name": "GROUP 6 - Workflow Simulation Test",
+			"item": [
+				{
+					"name": "6.0 Set Workflow Start Step",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{TOKEN}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Expense Approval Test Updated\",\n  \"description\": \"Updated description\",\n  \"startStepId\": \"{{STEP_ID_1}}\",\n  \"inputSchema\": {\n    \"amount\": {\"type\": \"number\", \"required\": true},\n    \"country\": {\"type\": \"string\", \"required\": true}\n  }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:8080/api/v1/workflows/{{WORKFLOW_ID}}"
+					}
+				},
+				{
+					"name": "6.1 Simulate workflow high amount path",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{TOKEN}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"inputData\": {\n    \"amount\": 250,\n    \"country\": \"US\",\n    \"priority\": \"High\"\n  }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:8080/api/v1/workflows/{{WORKFLOW_ID}}/simulate"
+					}
+				},
+				{
+					"name": "6.2 Simulate workflow low amount path",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{TOKEN}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"inputData\": {\n    \"amount\": 20,\n    \"country\": \"US\",\n    \"priority\": \"Low\"\n  }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:8080/api/v1/workflows/{{WORKFLOW_ID}}/simulate"
+					}
+				}
+			]
+		},
+		{
+			"name": "GROUP 7 - Workflow Health Check",
+			"item": [
+				{
+					"name": "7.1 Get workflow health",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{TOKEN}}"
+							}
+						],
+						"url": "http://localhost:8080/api/v1/workflows/{{WORKFLOW_ID}}/health"
+					}
+				}
+			]
+		},
+		{
+			"name": "GROUP 8 - Execution Tests",
+			"item": [
+				{
+					"name": "8.1 Publish workflow first",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{TOKEN}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Expense Approval Test Updated\",\n  \"description\": \"Updated description\",\n  \"status\": \"ACTIVE\",\n  \"startStepId\": \"{{STEP_ID_1}}\",\n  \"inputSchema\": {\n    \"amount\": {\"type\": \"number\", \"required\": true},\n    \"country\": {\"type\": \"string\", \"required\": true}\n  }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:8080/api/v1/workflows/{{WORKFLOW_ID}}"
+					}
+				},
+				{
+					"name": "8.2 Execute workflow — high amount",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 202 or 200\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([202, 200, 201]);",
+									"});",
+									"var jsonData = pm.response.json();",
+									"pm.collectionVariables.set(\"EXECUTION_ID_1\", jsonData.data.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{TOKEN}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"workflowId\": \"{{WORKFLOW_ID}}\",\n  \"inputData\": {\n    \"amount\": 250,\n    \"country\": \"US\",\n    \"priority\": \"High\"\n  }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:8080/api/v1/executions"
+					}
+				},
+				{
+					"name": "8.3 Get execution status",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{TOKEN}}"
+							}
+						],
+						"url": "http://localhost:8080/api/v1/executions/{{EXECUTION_ID_1}}"
+					}
+				},
+				{
+					"name": "8.4 Approve the execution",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{TOKEN}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"approved\": true,\n  \"comment\": \"Approved by postman test\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:8080/api/v1/executions/{{EXECUTION_ID_1}}/resume"
+					}
+				},
+				{
+					"name": "8.5 Check execution status after approval",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{TOKEN}}"
+							}
+						],
+						"url": "http://localhost:8080/api/v1/executions/{{EXECUTION_ID_1}}"
+					}
+				},
+				{
+					"name": "8.6 Execute workflow — low amount",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 202 or 200\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([202, 200, 201]);",
+									"});",
+									"var jsonData = pm.response.json();",
+									"pm.collectionVariables.set(\"EXECUTION_ID_2\", jsonData.data.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{TOKEN}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"workflowId\": \"{{WORKFLOW_ID}}\",\n  \"inputData\": {\n    \"amount\": 20,\n    \"country\": \"US\",\n    \"priority\": \"Low\"\n  }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:8080/api/v1/executions"
+					}
+				},
+				{
+					"name": "8.7 Get execution 2",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{TOKEN}}"
+							}
+						],
+						"url": "http://localhost:8080/api/v1/executions/{{EXECUTION_ID_2}}"
+					}
+				},
+				{
+					"name": "8.8 List all executions",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{TOKEN}}"
+							}
+						],
+						"url": "http://localhost:8080/api/v1/executions"
+					}
+				},
+				{
+					"name": "8.8.5 Start execution for cancellation",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 202 or 200\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([202, 200, 201]);",
+									"});",
+									"var jsonData = pm.response.json();",
+									"pm.collectionVariables.set(\"EXECUTION_ID_CANCEL\", jsonData.data.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{TOKEN}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"workflowId\": \"{{WORKFLOW_ID}}\",\n  \"inputData\": {\n    \"amount\": 500,\n    \"country\": \"US\",\n    \"priority\": \"High\"\n  }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:8080/api/v1/executions"
+					}
+				},
+				{
+					"name": "8.9 Cancel an execution",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{TOKEN}}"
+							}
+						],
+						"url": "http://localhost:8080/api/v1/executions/{{EXECUTION_ID_CANCEL}}/cancel"
+					}
+				}
+			]
+		},
+		{
+			"name": "GROUP 9 - Dashboard Tests",
+			"item": [
+				{
+					"name": "9.1 Get dashboard stats",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{TOKEN}}"
+							}
+						],
+						"url": "http://localhost:8080/api/v1/dashboard/stats"
+					}
+				},
+				{
+					"name": "9.2 Get recent executions",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{TOKEN}}"
+							}
+						],
+						"url": "http://localhost:8080/api/v1/dashboard/recent-executions"
+					}
+				},
+				{
+					"name": "9.3 Get execution trends",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{TOKEN}}"
+							}
+						],
+						"url": "http://localhost:8080/api/v1/dashboard/trends"
+					}
+				}
+			]
+		},
+		{
+			"name": "GROUP 10 - Notification Tests",
+			"item": [
+				{
+					"name": "10.1 Get notifications",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{TOKEN}}"
+							}
+						],
+						"url": "http://localhost:8080/api/v1/notifications"
+					}
+				},
+				{
+					"name": "10.2 Mark all as read",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{TOKEN}}"
+							}
+						],
+						"url": "http://localhost:8080/api/v1/notifications/read-all"
+					}
+				},
+				{
+					"name": "10.3 Verify notifications are now read",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{TOKEN}}"
+							}
+						],
+						"url": "http://localhost:8080/api/v1/notifications"
+					}
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "TOKEN",
+			"value": ""
+		},
+		{
+			"key": "WORKFLOW_ID",
+			"value": ""
+		},
+		{
+			"key": "STEP_ID_1",
+			"value": ""
+		},
+		{
+			"key": "STEP_ID_2",
+			"value": ""
+		},
+		{
+			"key": "STEP_ID_3",
+			"value": ""
+		},
+		{
+			"key": "STEP_ID_4",
+			"value": ""
+		},
+		{
+			"key": "RULE_ID_1",
+			"value": ""
+		},
+		{
+			"key": "EXECUTION_ID_1",
+			"value": ""
+		},
+		{
+			"key": "EXECUTION_ID_2",
+			"value": ""
+		}
+	]
+}

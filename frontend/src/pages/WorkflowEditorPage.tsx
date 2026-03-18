@@ -46,6 +46,78 @@ const WorkflowEditorPage: React.FC = () => {
   const [editingName, setEditingName] = useState(false);
   const [tempName, setTempName] = useState('');
 
+  // ── Feature 1: Rule Condition Tester ──
+  const [testerOpen, setTesterOpen] = useState(false);
+  const [testCondition, setTestCondition] = useState('');
+  const [testData, setTestData] = useState<Record<string, any>>({});
+  const [testResult, setTestResult] = useState<any>(null);
+
+  // ── Feature 2: Dry Run Simulator ──
+  const [dryRunOpen, setDryRunOpen] = useState(false);
+  const [dryRunData, setDryRunData] = useState<Record<string, any>>({});
+  const [dryRunResult, setDryRunResult] = useState<any>(null);
+  const [simulating, setSimulating] = useState(false);
+
+  const handleDryRun = async () => {
+    if (!wfId) return;
+    setSimulating(true);
+    setDryRunResult(null);
+    try {
+      // Cast numeric strings to numbers based on schema
+      const formattedData = { ...dryRunData };
+      Object.entries(schema).forEach(([key, schemaDef]: [string, any]) => {
+         if (schemaDef.type === 'number' && formattedData[key]) {
+            formattedData[key] = Number(formattedData[key]);
+         }
+      });
+      const res = await api.post(`/workflows/${wfId}/simulate`, formattedData);
+      setDryRunResult(res.data.data);
+    } catch (e: any) {
+      toast.error(e.response?.data?.message || 'Failed to simulate workflow');
+    } finally {
+      setSimulating(false);
+    }
+  };
+
+  // ── Feature 3: Workflow Health Check ──
+  const [healthOpen, setHealthOpen] = useState(false);
+  const [healthData, setHealthData] = useState<any>(null);
+  const [loadingHealth, setLoadingHealth] = useState(false);
+
+  const fetchHealth = async () => {
+    if (!wfId) return;
+    setLoadingHealth(true);
+    try {
+      const res = await api.get(`/workflows/${wfId}/health`);
+      setHealthData(res.data.data);
+      setHealthOpen(true);
+    } catch (e: any) {
+      toast.error('Failed to run health check');
+    } finally {
+      setLoadingHealth(false);
+    }
+  };
+
+  const handleTestCondition = async () => {
+    if (!testCondition.trim()) {
+      toast.error('Please enter a condition to test');
+      return;
+    }
+    try {
+      // Cast numeric strings to numbers based on schema
+      const formattedData = { ...testData };
+      Object.entries(schema).forEach(([key, schemaDef]: [string, any]) => {
+         if (schemaDef.type === 'number' && formattedData[key]) {
+            formattedData[key] = Number(formattedData[key]);
+         }
+      });
+      const res = await ruleApi.testCondition(testCondition, formattedData);
+      setTestResult(res.data.data);
+    } catch (e: any) {
+      toast.error(e.response?.data?.message || 'Failed to test condition');
+    }
+  };
+
   /* ── loaders ── */
   const load = useCallback(async () => {
     if (!wfId) return;
@@ -260,13 +332,21 @@ const WorkflowEditorPage: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2">
+            <button onClick={fetchHealth} disabled={loadingHealth}
+              className="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5">
+              <span className="text-sm">🩺</span> {loadingHealth ? 'Running...' : 'Health'}
+            </button>
             <button onClick={publish}
               className="bg-[#fafafa] hover:bg-[#e5e5e5] text-black font-semibold px-4 py-1.5 rounded-lg text-xs transition-colors">
               Publish
             </button>
+            <button onClick={() => { setDryRunOpen(true); setDryRunResult(null); }}
+              className="bg-violet-500/10 hover:bg-violet-500/20 text-violet-400 border border-violet-500/30 px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 shadow-[0_0_15px_rgba(139,92,246,0.15)]">
+              <span className="text-sm rounded-full bg-violet-500/20 w-4 h-4 flex items-center justify-center">⚡</span> Simulator
+            </button>
             <button onClick={() => navigate(`/workflows/${wfId}/execute`)}
               className="bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 border border-amber-500/20 px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5">
-              <Play size={12} className="fill-amber-500" /> Test Run
+              <Play size={12} className="fill-amber-500" /> Execute
             </button>
           </div>
         </div>
@@ -545,6 +625,124 @@ const WorkflowEditorPage: React.FC = () => {
                 </div>
               </div>
             )}
+
+            {/* Feature 1: Test Rule Conditions Panel */}
+            <div className="border-t border-white/[0.04]">
+              <button 
+                onClick={() => setTesterOpen(!testerOpen)}
+                className="w-full bg-[#0a0a0a] hover:bg-white/[0.02] px-5 py-3 flex items-center justify-between text-[#a1a1a1] hover:text-[#fafafa] font-semibold text-xs tracking-wider transition-colors"
+                style={{ height: '48px' }} // fixed height to prevent jitter
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">🧪</span> TEST RULE CONDITIONS
+                </div>
+                <span>{testerOpen ? '[collapse ▲]' : '[expand ▼]'}</span>
+              </button>
+              
+              {testerOpen && (
+                <div className="p-5 bg-[#0e0e0e] border-t border-white/[0.04] inset-shadow">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-[10px] font-medium text-[#a1a1a1] uppercase tracking-wider block mb-1.5">Condition String</label>
+                        <select 
+                          className="w-full bg-[#141414] border border-white/[0.10] rounded-lg px-2 py-2 text-sm text-[#fafafa] font-mono outline-none focus:border-amber-500/60 mb-2 transition-all"
+                           onChange={e => {
+                             if (e.target.value !== "__manual__") setTestCondition(e.target.value);
+                           }}
+                        >
+                          <option value="__manual__">[ Type custom below or select existing ]</option>
+                          {rules.map((r, i) => (
+                             <option key={r.id} value={r.condition}>Rule {i+1}: {r.condition}</option>
+                          ))}
+                        </select>
+                        <input 
+                          placeholder="e.g. amount > 100" 
+                          value={testCondition}
+                          onChange={e => { setTestCondition(e.target.value); setTestResult(null); }}
+                          className="w-full bg-[#141414] border border-white/[0.10] rounded-lg px-3 py-2 text-sm text-amber-500 font-mono placeholder-[#525252] outline-none focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/30 transition-all font-bold" 
+                        />
+                      </div>
+                      
+                      <div className="bg-[#141414] border border-white/[0.08] p-4 rounded-xl space-y-3">
+                        <label className="text-[10px] font-medium text-[#fafafa] uppercase tracking-wider block">Test Data Inputs</label>
+                        {Object.entries(schema).length === 0 ? (
+                           <p className="text-[#525252] text-[10px]">No input schema defined yet.</p>
+                        ) : (
+                          Object.entries(schema).map(([key, schemaDef]: [string, any]) => (
+                            <div key={key} className="flex flex-col gap-1">
+                              <span className="text-[#a1a1a1] text-xs font-mono">{key} <span className="text-[#525252]">({schemaDef.type})</span></span>
+                              {schemaDef.type === 'boolean' ? (
+                                <select 
+                                  className="w-full bg-[#0a0a0a] border border-white/[0.10] rounded px-2 py-1.5 text-xs text-[#fafafa]"
+                                  onChange={e => setTestData({...testData, [key]: e.target.value === 'true'})}
+                                >
+                                  <option value="">-- select --</option>
+                                  <option value="true">True</option>
+                                  <option value="false">False</option>
+                                </select>
+                              ) : (
+                                <input 
+                                  type={schemaDef.type === 'number' ? 'number' : 'text'}
+                                  placeholder={schemaDef.allowedValues ? `e.g. ${schemaDef.allowedValues[0]}` : ''}
+                                  onChange={e => setTestData({...testData, [key]: e.target.value})}
+                                  className="w-full bg-[#0a0a0a] border border-white/[0.10] rounded px-2 py-1.5 text-xs text-[#fafafa] font-mono outline-none focus:border-amber-500/50" 
+                                />
+                              )}
+                            </div>
+                          ))
+                        )}
+                      </div>
+                      
+                      <button 
+                         onClick={handleTestCondition}
+                         className="w-full bg-amber-500 hover:bg-amber-400 text-black font-bold uppercase tracking-widest px-4 py-2.5 rounded-xl text-xs transition-colors flex justify-center items-center gap-2"
+                      >
+                         <span className="text-base">🧪</span> Test Condition
+                      </button>
+                    </div>
+
+                    <div className="bg-black/40 border border-white/[0.04] rounded-xl p-5 min-h-[250px]">
+                      <h3 className="text-[10px] font-bold text-[#525252] uppercase tracking-[0.2em] mb-4">Results Panel</h3>
+                      
+                      {!testResult ? (
+                         <div className="h-full flex items-center justify-center text-[#525252] text-xs font-mono italic">
+                           Enter condition and test data to see results here.
+                         </div>
+                      ) : (
+                         <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
+                           <div className={`p-4 border rounded-xl flex items-center gap-3 ${testResult.result ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>
+                             <span className="text-2xl">{testResult.result ? '✅' : '❌'}</span>
+                             <div>
+                               <div className="font-bold tracking-tight">{testResult.result ? 'TRUE' : 'FALSE'}</div>
+                               <div className="text-xs opacity-80 mt-0.5">{testResult.result ? 'This condition MATCHES' : 'This condition does NOT match → DEFAULT rule will fire'}</div>
+                             </div>
+                           </div>
+                           
+                           <div>
+                             <h4 className="text-[10px] font-bold text-[#a1a1a1] uppercase tracking-wider mb-2">Breakdown</h4>
+                             <div className="space-y-1.5 font-mono text-xs">
+                               {(testResult.explanation || []).map((step: any, idx: number) => (
+                                 <div key={idx} className={`p-2 rounded border bg-white/[0.02] flex items-center gap-2 ${step.result ? 'text-emerald-400 border-emerald-500/10' : 'text-red-400 border-red-500/10'}`}>
+                                   <span>{step.result ? '✅' : '❌'}</span>
+                                   <div className="flex-1 truncate" title={step.expression}>
+                                     <span className="text-[#fafafa]">{step.expression}</span>
+                                     {step.value && <span className="mx-2 text-[#525252]">→</span>}
+                                     {step.value && <span className="text-[#a1a1a1]">{step.value}</span>}
+                                   </div>
+                                   <div className="font-bold opacity-80">{step.result ? 'TRUE' : 'FALSE'}</div>
+                                 </div>
+                               ))}
+                             </div>
+                           </div>
+                         </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
           </div>
         </section>
       )}
@@ -586,6 +784,193 @@ const WorkflowEditorPage: React.FC = () => {
            </div>
         </section>
       )}
+
+      {/* ━━━━━━━━━━━━━ FEATURE 2: DRY RUN MODAL ━━━━━━━━━━━━━ */}
+      {dryRunOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-[#0e0e0e] border border-violet-500/30 w-full mb-20 max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="p-5 border-b border-white/[0.04] bg-[#0a0a0a] flex items-center justify-between">
+              <h2 className="text-[#fafafa] font-bold tracking-wide flex items-center gap-2">
+                <span className="text-xl">⚡</span> Dry Run Simulator
+              </h2>
+              <button onClick={() => setDryRunOpen(false)} className="text-[#525252] hover:text-[#fafafa] p-1.5 bg-[#141414] border border-white/[0.06] rounded-md transition-colors">
+                <X size={16} />
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto custom-scrollbar flex-1 flex flex-col md:flex-row gap-6">
+              <div className="flex-1 space-y-5">
+                <p className="text-xs text-[#a1a1a1] leading-relaxed">
+                  Test your workflow logic instantly. The simulator traces the execution path using your test inputs, evaluating rules without sending real notifications or creating database records.
+                </p>
+                
+                <div className="bg-[#141414] border border-white/[0.06] p-4 rounded-xl space-y-4">
+                  <h3 className="text-[10px] font-bold text-violet-400 uppercase tracking-widest pl-1 border-l-2 border-violet-500/50">Test Input Data</h3>
+                  {Object.entries(schema).length === 0 ? (
+                    <p className="text-[#525252] text-[10px]">No input schema defined. Simulator will proceed with empty data.</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {Object.entries(schema).map(([key, schemaDef]: [string, any]) => (
+                        <div key={key}>
+                          <label className="text-[10px] uppercase font-bold text-[#fafafa] tracking-wider mb-1.5 block flex justify-between">
+                            {key} <span className="text-[#525252] font-mono">{schemaDef.type}</span>
+                          </label>
+                          {schemaDef.type === 'boolean' ? (
+                            <select 
+                              className="w-full bg-[#0a0a0a] border border-white/[0.10] rounded-lg px-3 py-2 text-xs text-[#fafafa] outline-none focus:border-violet-500/50"
+                              onChange={e => setDryRunData({...dryRunData, [key]: e.target.value === 'true'})}
+                            >
+                              <option value="">-- select --</option>
+                              <option value="true">True</option>
+                              <option value="false">False</option>
+                            </select>
+                          ) : (
+                            <input 
+                              type={schemaDef.type === 'number' ? 'number' : 'text'}
+                              placeholder={schemaDef.allowedValues ? `e.g. ${schemaDef.allowedValues[0]}` : ''}
+                              onChange={e => setDryRunData({...dryRunData, [key]: e.target.value})}
+                              className="w-full bg-[#0a0a0a] border border-white/[0.10] rounded-lg px-3 py-2 text-xs text-[#fafafa] font-mono outline-none focus:border-violet-500/50 transition-all focus:ring-1 focus:ring-violet-500/30" 
+                            />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                
+                <button 
+                  onClick={handleDryRun}
+                  disabled={simulating}
+                  className="w-full bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white font-bold tracking-widest uppercase px-4 py-3 rounded-xl text-xs transition-all flex justify-center items-center shadow-[0_0_20px_rgba(139,92,246,0.3)] hover:shadow-[0_0_25px_rgba(139,92,246,0.5)]"
+                >
+                  {simulating ? 'Simulating...' : 'Run Simulation'}
+                </button>
+              </div>
+
+              {/* Simulation Result Path */}
+              <div className="flex-1 bg-black/50 border border-white/[0.04] rounded-xl p-5 overflow-y-auto">
+                <h3 className="text-[10px] font-bold text-[#525252] uppercase tracking-[0.2em] mb-4">Simulated Path</h3>
+                {!dryRunResult ? (
+                  <div className="h-40 flex items-center justify-center text-[#525252] text-xs font-mono italic">
+                    Configure data and run simulation.
+                  </div>
+                ) : (
+                  <div className="space-y-4 animate-in fade-in slide-in-from-right-4">
+                    {dryRunResult.simulatedSuccess ? (
+                      <div className="text-emerald-400 text-xs font-bold tracking-widest flex items-center gap-2 mb-4 p-2 bg-emerald-500/10 rounded border border-emerald-500/20 uppercase"><span className="text-base">✅</span> Path Simulation Success</div>
+                    ) : (
+                      <div className="text-red-400 text-xs font-medium tracking-wide flex flex-col gap-1 mb-4 p-3 bg-red-500/10 rounded border border-red-500/20">
+                         <div className="font-bold flex items-center gap-2 uppercase tracking-widest"><span className="text-base">❌</span> Simulation Halted</div>
+                         <div className="text-[#a1a1a1] mt-1">{dryRunResult.simulationError}</div>
+                      </div>
+                    )}
+                    
+                    <div className="relative pl-6 space-y-6 before:absolute before:inset-0 before:ml-[11px] before:w-px before:bg-white/[0.1] pb-4">
+                      {dryRunResult.path?.map((step: any, idx: number) => {
+                        const style = getStyle(step.stepType);
+                        return (
+                          <div key={idx} className="relative">
+                            <div className={`absolute -ml-8 w-4 h-4 rounded-full border-2 border-[#0e0e0e] top-1 z-10 ${step.error ? 'bg-red-500' : 'bg-violet-500'}`}></div>
+                            <div className="bg-[#141414] border border-white/[0.06] rounded-xl p-3">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className={`text-[10px] font-bold tracking-widest uppercase px-2 py-0.5 rounded ${style.bg}`}>{style.label.replace('✓', '').replace('🔔', '').replace('⚙', '').trim()}</span>
+                                <span className="text-[10px] text-[#525252] font-mono">Step {step.sequenceIndex}</span>
+                              </div>
+                              <div className="text-sm font-bold text-[#fafafa] tracking-wide mb-1 opacity-90">{step.stepName}</div>
+                              {step.matchedRuleCondition && (
+                                <div className="mt-2 p-2 bg-white/[0.02] border border-white/[0.04] rounded-lg">
+                                  <div className="text-[9px] text-amber-500/70 font-bold uppercase tracking-widest mb-1">Matched Rule</div>
+                                  <div className="text-xs font-mono text-[#fafafa] italic break-words">{step.matchedRuleCondition}</div>
+                                </div>
+                              )}
+                              {step.error && (
+                                <div className="mt-2 text-xs text-red-400 font-medium">Error: {step.error}</div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                      
+                      {dryRunResult.simulatedSuccess && (
+                         <div className="relative pt-2">
+                            <div className="absolute -ml-8 w-4 h-4 rounded-full border-2 border-[#0e0e0e] bg-emerald-500 top-3 z-10"></div>
+                            <div className="text-xs font-bold text-emerald-500 tracking-widest uppercase py-2">Workflow Completed</div>
+                         </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ━━━━━━━━━━━━━ FEATURE 3: HEALTH CHECK MODAL ━━━━━━━━━━━━━ */}
+      {healthOpen && healthData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-[#0e0e0e] border border-white/[0.08] w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="p-5 border-b border-white/[0.04] bg-[#0a0a0a] flex items-center justify-between">
+              <h2 className="text-[#fafafa] font-bold tracking-wide flex items-center gap-2">
+                <span className="text-xl">🩺</span> Workflow Health Report
+              </h2>
+              <button onClick={() => setHealthOpen(false)} className="text-[#525252] hover:text-[#fafafa] p-1.5 bg-[#141414] border border-white/[0.06] rounded-md transition-colors">
+                <X size={16} />
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto custom-scrollbar flex-1 space-y-6">
+               <div className="flex items-center justify-between bg-[#141414] border border-white/[0.06] rounded-xl p-5 relative overflow-hidden">
+                  <div className="z-10">
+                     <div className="text-[10px] font-bold text-[#a1a1a1] uppercase tracking-widest mb-1">Overall Health Score</div>
+                     <div className={`text-5xl font-black ${healthData.score === 100 ? 'text-emerald-500' : healthData.score > 70 ? 'text-amber-500' : 'text-red-500'}`}>
+                        {healthData.score}<span className="text-2xl opacity-50">/100</span>
+                     </div>
+                  </div>
+                  <div className={`absolute right-[-20px] bottom-[-20px] opacity-[0.03] text-9xl z-0 ${healthData.score === 100 ? 'text-emerald-500' : healthData.score > 70 ? 'text-amber-500' : 'text-red-500'}`}>
+                     🩺
+                  </div>
+               </div>
+
+               <div className="space-y-3">
+                  <h3 className="text-[10px] font-bold text-[#fafafa] uppercase tracking-widest pl-1 border-l-2 border-[#525252]">Diagnostic Checks</h3>
+                  {healthData.checks?.map((check: any, idx: number) => (
+                    <div key={idx} className={`p-4 rounded-xl border ${
+                        check.status === 'PASS' ? 'bg-emerald-500/5 border-emerald-500/10' : 
+                        check.status === 'WARNING' ? 'bg-amber-500/5 border-amber-500/20' : 
+                        'bg-red-500/5 border-red-500/20'
+                    }`}>
+                        <div className="flex items-center justify-between mb-1.5">
+                           <div className="text-xs font-bold text-[#fafafa] tracking-wide flex items-center gap-2">
+                              {check.status === 'PASS' && <span className="text-emerald-500">✅</span>}
+                              {check.status === 'WARNING' && <span className="text-amber-500">⚠️</span>}
+                              {check.status === 'FAIL' && <span className="text-red-500">❌</span>}
+                              {check.name}
+                           </div>
+                           <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded ${
+                               check.status === 'PASS' ? 'bg-emerald-500/20 text-emerald-400' : 
+                               check.status === 'WARNING' ? 'bg-amber-500/20 text-amber-500' : 
+                               'bg-red-500/20 text-red-400'
+                           }`}>{check.status}</span>
+                        </div>
+                        <div className="text-xs text-[#a1a1a1] pl-6 font-mono leading-relaxed">{check.message}</div>
+                    </div>
+                  ))}
+               </div>
+            </div>
+            
+            <div className="p-4 border-t border-white/[0.04] bg-[#0a0a0a]">
+              <button 
+                onClick={() => setHealthOpen(false)}
+                className="w-full bg-[#1e1e1e] hover:bg-[#2a2a2a] text-[#fafafa] font-bold tracking-widest uppercase px-4 py-3 rounded-xl text-xs transition-all"
+              >
+                Close Report
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

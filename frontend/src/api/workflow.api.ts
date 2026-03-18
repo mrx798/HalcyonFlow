@@ -8,5 +8,8 @@ export const workflowApi = {
   updateWorkflow: (id: string, data: any) => api.put(`/workflows/${id}`, data),
   deleteWorkflow: (id: string) => api.delete(`/workflows/${id}`),
   executeWorkflow: (id: string, data: any) => api.post(`/workflows/${id}/execute`, data),
+  simulateWorkflow: (id: string, initialData: any) =>
+    api.post(`/workflows/${id}/simulate`, initialData),
   validateWorkflow: (id: string) => api.post(`/workflows/${id}/validate`),
+  getWorkflowHealth: (id: string) => api.get(`/workflows/${id}/health`),
 };

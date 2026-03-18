@@ -159,5 +159,96 @@ public class WorkflowService {
         result.put("errors", errors);
         return result;
     }
+
+    @Transactional(readOnly = true)
+    public com.flowforge.backend.dto.response.HealthReportResponse getWorkflowHealth(UUID id, String userEmail) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "email", userEmail));
+
+        Workflow workflow = workflowRepository.findByIdAndCreatedById(id, user.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Workflow", "id", id.toString()));
+
+        List<com.flowforge.backend.dto.response.HealthReportResponse.HealthCheck> checks = new ArrayList<>();
+        int score = 100;
+
+        // 1. Check Steps Presence
+        if (workflow.getSteps() == null || workflow.getSteps().isEmpty()) {
+            checks.add(createCheck("Steps Definition", "FAIL", "Workflow has no steps."));
+            score -= 30;
+        } else {
+            checks.add(createCheck("Steps Definition", "PASS", "Workflow has " + workflow.getSteps().size() + " step(s)."));
+        }
+
+        // 2. Check Start Step
+        if (workflow.getStartStepId() == null) {
+            checks.add(createCheck("Start Step", "FAIL", "Start step is not designated."));
+            score -= 20;
+        } else {
+            boolean exists = workflow.getSteps() != null && workflow.getSteps().stream().anyMatch(s -> s.getId().equals(workflow.getStartStepId()));
+            if (!exists) {
+                checks.add(createCheck("Start Step", "FAIL", "Start step references a deleted or invalid step."));
+                score -= 20;
+            } else {
+                checks.add(createCheck("Start Step", "PASS", "Start step is correctly designated."));
+            }
+        }
+
+        // 3. Schema definition
+        if (workflow.getInputSchema() == null || workflow.getInputSchema().isEmpty()) {
+            checks.add(createCheck("Input Schema", "WARNING", "No input schema defined. Proceeding without typed data."));
+            score -= 5;
+        } else {
+            checks.add(createCheck("Input Schema", "PASS", "Input schema is defined."));
+        }
+
+        // 4. Default rules & unreachable steps
+        if (workflow.getSteps() != null && !workflow.getSteps().isEmpty()) {
+            int missingDefault = 0;
+            List<UUID> targetIds = new ArrayList<>();
+            for (com.flowforge.backend.entity.Step s : workflow.getSteps()) {
+                if (s.getRules() != null) {
+                    boolean hasDefault = s.getRules().stream().anyMatch(r -> Boolean.TRUE.equals(r.getIsDefault()));
+                    if (!hasDefault) missingDefault++;
+                    s.getRules().forEach(r -> { if (r.getNextStepId() != null) targetIds.add(r.getNextStepId()); });
+                } else {
+                    missingDefault++;
+                }
+            }
+
+            if (missingDefault > 0) {
+                checks.add(createCheck("Default Rules", "FAIL", missingDefault + " step(s) are missing a DEFAULT fallback rule."));
+                score -= Math.min(20, missingDefault * 10);
+            } else {
+                checks.add(createCheck("Default Rules", "PASS", "All steps have DEFAULT fallback rules."));
+            }
+
+            // Unreachable steps (not start step, and not targeted by any rule)
+            int unreachable = 0;
+            for (com.flowforge.backend.entity.Step s : workflow.getSteps()) {
+                if (!s.getId().equals(workflow.getStartStepId()) && !targetIds.contains(s.getId())) {
+                    unreachable++;
+                }
+            }
+            if (unreachable > 0) {
+                checks.add(createCheck("Unreachable Steps", "WARNING", unreachable + " step(s) cannot be reached by any rule."));
+                score -= Math.min(15, unreachable * 5);
+            } else {
+                checks.add(createCheck("Unreachable Steps", "PASS", "All steps are reachable."));
+            }
+        }
+
+        return com.flowforge.backend.dto.response.HealthReportResponse.builder()
+                .score(Math.max(0, score))
+                .checks(checks)
+                .build();
+    }
+
+    private com.flowforge.backend.dto.response.HealthReportResponse.HealthCheck createCheck(String name, String status, String message) {
+        return com.flowforge.backend.dto.response.HealthReportResponse.HealthCheck.builder()
+                .name(name)
+                .status(status)
+                .message(message)
+                .build();
+    }
 }
 

@@ -1,5 +1,4 @@
 package com.flowforge.backend.controller;
-
 import com.flowforge.backend.dto.request.WorkflowRequest;
 import com.flowforge.backend.dto.response.ApiResponse;
 import com.flowforge.backend.dto.response.WorkflowResponse;
@@ -28,6 +27,8 @@ import java.util.UUID;
 public class WorkflowController {
 
     private final WorkflowService workflowService;
+    private final com.flowforge.backend.service.SimulationService simulationService;
+    private final com.flowforge.backend.repository.UserRepository userRepository;
 
     @PostMapping
     @Operation(summary = "Create a new workflow")
@@ -84,6 +85,26 @@ public class WorkflowController {
         boolean valid = (boolean) result.get("valid");
         String message = valid ? "Workflow is valid and ready to execute" : "Workflow has validation errors";
         return ResponseEntity.ok(ApiResponse.success(message, result));
+    }
+
+    @PostMapping("/{id}/simulate")
+    @Operation(summary = "Dry run / simulate a workflow execution")
+    public ResponseEntity<ApiResponse<com.flowforge.backend.dto.SimulationResponse>> simulateWorkflow(
+            @PathVariable UUID id,
+            @RequestBody Map<String, Object> inputData) {
+        String userEmail = SecurityUtils.getCurrentUserEmail();
+        com.flowforge.backend.entity.User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new com.flowforge.backend.exception.ResourceNotFoundException("User", "email", userEmail));
+        com.flowforge.backend.dto.SimulationResponse response = simulationService.simulateWorkflow(id, inputData, user.getId());
+        return ResponseEntity.ok(ApiResponse.success("Simulation completed", response));
+    }
+
+    @GetMapping("/{id}/health")
+    @Operation(summary = "Get workflow health report")
+    public ResponseEntity<ApiResponse<com.flowforge.backend.dto.response.HealthReportResponse>> getWorkflowHealth(@PathVariable UUID id) {
+        String userEmail = SecurityUtils.getCurrentUserEmail();
+        com.flowforge.backend.dto.response.HealthReportResponse report = workflowService.getWorkflowHealth(id, userEmail);
+        return ResponseEntity.ok(ApiResponse.success("Workflow health retrieved successfully", report));
     }
 }
 
