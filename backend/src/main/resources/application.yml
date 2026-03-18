@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: ${PORT:8080}
 
 spring:
   application:
@@ -10,9 +10,9 @@ spring:
       enabled: true
 
   datasource:
-    url: jdbc:postgresql://127.0.0.1:5432/flowforge_db
-    username: flowforge_user
-    password: 1434@Sharath
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://127.0.0.1:5432/flowforge_db}
+    username: ${SPRING_DATASOURCE_USERNAME:flowforge_user}
+    password: ${SPRING_DATASOURCE_PASSWORD:1434@Sharath}
     driver-class-name: org.postgresql.Driver
 
   jpa:

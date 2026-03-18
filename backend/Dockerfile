@@ -25,8 +25,8 @@ COPY --from=build /app/target/*.jar app.jar
 
 # Add health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD wget -q -O /dev/null http://localhost:8080/actuator/health || exit 1
+  CMD wget -q -O /dev/null http://localhost:${PORT:-8080}/actuator/health || exit 1
 
-EXPOSE 8080
+EXPOSE ${PORT:-8080}
 
 ENTRYPOINT ["java", "-jar", "app.jar"]
