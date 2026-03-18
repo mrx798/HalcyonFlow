@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.env.local
+*.log
+*.txt
+.git/
+.gitignore
+README.md
+test-results/

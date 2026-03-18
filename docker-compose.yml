@@ -1,9 +1,10 @@
 version: '3.8'
 
 services:
+
   postgres:
-    image: postgres:15
-    container_name: flowforge-db
+    image: postgres:15-alpine
+    container_name: flowforge-postgres
     environment:
       POSTGRES_DB: flowforge_db
       POSTGRES_USER: flowforge_user
@@ -17,28 +18,57 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
+    networks:
+      - flowforge-network
 
   backend:
-    build: ./backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: flowforge-backend
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/flowforge_db
       SPRING_DATASOURCE_USERNAME: flowforge_user
       SPRING_DATASOURCE_PASSWORD: 1434@Sharath
-      JWT_SECRET: flowforge-super-secret-key-minimum-256-bits-long-for-hs256
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      SPRING_FLYWAY_ENABLED: true
+      JWT_SECRET: flowforge-super-secret-key-minimum-256-bits-long-for-hs256-algorithm
+      SPRING_THREADS_VIRTUAL_ENABLED: true
     ports:
       - "8080:8080"
     depends_on:
       postgres:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:8080/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - flowforge-network
+    restart: on-failure
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
     container_name: flowforge-frontend
     ports:
-      - "3000:3000"
+      - "3000:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    networks:
+      - flowforge-network
+    restart: on-failure
 
 volumes:
   postgres_data:
+    name: flowforge_postgres_data
+
+networks:
+  flowforge-network:
+    name: flowforge-network
+    driver: bridge

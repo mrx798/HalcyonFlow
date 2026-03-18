@@ -40,10 +40,19 @@ spring:
       mail.smtp.auth: true
       mail.smtp.starttls.enable: true
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
 app:
   jwt:
     secret: ${JWT_SECRET:flowforge-super-secret-key-minimum-256-bits-long-for-hs256}
     access-token-expiry: 86400000
     refresh-token-expiry: 604800000
   cors:
-    allowed-origins: http://localhost:3000
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}

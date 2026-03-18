@@ -73,6 +73,36 @@ Modern businesses run on processes — expense approvals, employee onboarding, c
 
 ---
 
+## 🐳 Quick Start (Docker — One Command)
+
+> **Prerequisites:** [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/) installed.
+
+```bash
+# Clone and run
+git clone https://github.com/mrx798/FlowForge.git
+cd FlowForge
+docker-compose up --build
+```
+
+| Service    | URL                                         |
+|------------|---------------------------------------------|
+| Frontend   | [http://localhost:3000](http://localhost:3000)               |
+| Backend API| [http://localhost:8080/api/v1](http://localhost:8080/api/v1) |
+| Swagger UI | [http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html) |
+| Health     | [http://localhost:8080/actuator/health](http://localhost:8080/actuator/health) |
+
+**To stop:**
+```bash
+docker-compose down
+```
+
+**To stop and remove data:**
+```bash
+docker-compose down -v
+```
+
+---
+
 ## 🧪 Running Tests
 ```bash
 cd backend

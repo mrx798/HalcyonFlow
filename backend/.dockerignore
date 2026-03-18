@@ -1,0 +1,10 @@
+target/
+.mvn/
+*.log
+*.txt
+*.json
+.git/
+.gitignore
+README.md
+HELP.md
+logs/
