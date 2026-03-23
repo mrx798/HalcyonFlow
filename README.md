@@ -12,9 +12,9 @@ The platform is successfully deployed on **Railway**:
 
 ### 📺 Project Walkthrough
 
-<div align="center">
-  <video src="https://github.com/mrx798/HalcyonFlow/raw/main/media/Demo.mp4" width="100%" controls></video>
-</div>
+![HalcyonFlow Demo Video](https://github.com/mrx798/HalcyonFlow/raw/main/media/Demo.mp4)
+
+> 💡 **Tip:** If the video above does not load, you can **[click here to watch the demo video directly](https://github.com/mrx798/HalcyonFlow/raw/main/media/Demo.mp4)**.
 
 ---
 
