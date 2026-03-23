@@ -12,9 +12,15 @@ The platform is successfully deployed on **Railway**:
 
 ### 📺 Project Walkthrough
 
-![HalcyonFlow Demo Video](https://github.com/mrx798/HalcyonFlow/raw/main/media/Demo.mp4)
-
-> 💡 **Tip:** If the video above does not load, you can **[click here to watch the demo video directly](https://github.com/mrx798/HalcyonFlow/raw/main/media/Demo.mp4)**.
+<div align="center">
+  <br/>
+  <a href="https://github.com/mrx798/HalcyonFlow/raw/main/media/Demo.mp4">
+    <img src="https://img.shields.io/badge/▶_WATCH_DEMO_VIDEO-blue?style=for-the-badge&logo=github&logoColor=white" alt="Watch Demo Video" height="60">
+  </a>
+  <br/>
+  <br/>
+  <i>(Click the button above to play the walkthrough video)</i>
+</div>
 
 ---
 
