@@ -12,10 +12,9 @@ The platform is successfully deployed on **Railway**:
 
 ### 📺 Project Walkthrough
 
-> 🎬 **[Watch the Demo Video](./media/demo.mp4)**
-
-*(To add your video: Record your walkthrough, name it `demo.mp4`, and place it in the `media/` folder. The link above will work once you push the video file.)*
-
+<div align="center">
+  <video src="./media/Demo.mp4" width="100%" controls></video>
+</div>
 
 ---
 
