@@ -13,7 +13,7 @@ The platform is successfully deployed on **Railway**:
 ### 📺 Project Walkthrough
 
 <div align="center">
-  <video src="./media/Demo.mp4" width="100%" controls></video>
+  <video src="https://github.com/mrx798/HalcyonFlow/raw/main/media/Demo.mp4" width="100%" controls></video>
 </div>
 
 ---
