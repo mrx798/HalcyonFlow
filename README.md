@@ -11,9 +11,11 @@ The platform is successfully deployed on **Railway**:
 🔗 **[HalcyonFlow Live Dashboard](https://renewed-transformation-production-2798.up.railway.app/)**
 
 ### 📺 Project Walkthrough
-[ADD YOUR VIDEO HERE]
-<!-- Replace the line below with your video link once uploaded to the media folder -->
+
 > 🎬 **[Watch the Demo Video](./media/demo.mp4)**
+
+*(To add your video: Record your walkthrough, name it `demo.mp4`, and place it in the `media/` folder. The link above will work once you push the video file.)*
+
 
 ---
 
