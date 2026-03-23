@@ -4,7 +4,18 @@
 
 HalcyonFlow is a full-stack enterprise workflow automation platform built for the **Halleyx Full Stack Engineer Challenge 2026**. It enables teams to visually design multi-step business processes, define conditional routing rules using a custom expression engine, execute workflows with real input data, and audit every decision with detailed logs — all without writing code.
 
+## 🚀 Live Demo & Deployment
 
+### 🌐 Live Application
+The platform is successfully deployed on **Railway**:
+🔗 **[HalcyonFlow Live Dashboard](https://renewed-transformation-production-2798.up.railway.app/)**
+
+### 📺 Project Walkthrough
+[ADD YOUR VIDEO HERE]
+<!-- Replace the line below with your video link once uploaded to the media folder -->
+> 🎬 **[Watch the Demo Video](./media/demo.mp4)**
+
+---
 
 ### Rule Engine in Action
 
@@ -614,12 +625,6 @@ Import from `docs/sample-workflows/expense-approval.json` using the workflow imp
 Full Stack Developer — Java, Spring Boot, React, TypeScript
 
 Built for the Halleyx Full Stack Engineer Challenge 2026.
-
----
-
-## 📄 License
-
-This project was built as a submission for the Halleyx placement challenge.
 
 ---
 
